@@ -1,0 +1,145 @@
+<html>
+<head>
+    <style>
+        #messages {
+            text-align: left;
+            padding: 1em;
+            margin: 1em;
+            border: 1px solid black;
+        }
+    </style>
+    <title>Mamba Planning Join</title>
+</head>
+<body>
+<div class="container">
+    <h1>Mamba Planning Join</h1>
+    <div id="messages" class="messages"></div>
+
+    <table>
+        <tr>
+            <td>
+                <button id="joinCommand">Join Session Command</button>
+            </td>
+            <td>
+                <b>Participant name: </b><input id="participantName" />
+            </td>
+            <td>
+                <b>Session code: </b><input id="sessionCode" />
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <button id="voteCommand">Vote Command</button>
+            </td>
+            <td>
+                <b>Selected card: </b><input id="selectedCard" />
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <button id="leaveSessionCommand">Leave Session Command</button>
+            </td>
+        </tr>
+    </table>
+
+    <div class="input-fields">
+        <p>Send custom command JSON:</p>
+        <textarea name="message" id="message" cols="100" rows="20"></textarea>
+        <button id="send">Send</button>≠
+    </div>
+</div>
+</body>
+<script>
+    const messageWindow = document.getElementById("messages");
+ 
+    const sendButton = document.getElementById("send");
+    const messageInput = document.getElementById("message");
+ 
+    const socket = new WebSocket("ws://localhost:8080/planning/join");
+
+    socket.onopen = function (event) {
+        addMessageToWindow("Connected");
+    };
+
+    socket.onclose = function (e) {
+        addMessageToWindow("Disconnected");
+    }
+ 
+    socket.onmessage = function (event) {
+        let fileReader = new FileReader()
+        
+        fileReader.onload = function (e) {
+            let command = new TextDecoder("utf8").decode(e.target.result);
+            addMessageToWindow(`<p style="background-color:lightcyan">Got Message: ${command}</p>`);
+        }
+        fileReader.readAsArrayBuffer(event.data);
+    };
+ 
+    sendButton.onclick = function (event) {
+        sendMessage(messageInput.value);
+        messageInput.value = "";
+    };
+ 
+    function sendMessage(message) {
+        socket.send(new TextEncoder().encode(message));
+        addMessageToWindow('<p style="background-color:lightcoral">Sent Message: ' + message + "</p>");
+    }
+ 
+    function addMessageToWindow(message) {
+        messageWindow.innerHTML += `<div>${message}</div>`
+    }
+
+    // Commands
+    class Command {
+        constructor(type, message) {
+            this.type = type
+            this.message = message
+        }
+    }
+
+    // Join session command
+    const joinSessionCommandButton = document.getElementById("joinCommand");
+    const sessionCodeInput = document.getElementById("sessionCode");
+    const participantNameInput = document.getElementById("participantName");
+
+    joinSessionCommandButton.onclick = function (event) {
+        let command = JSON.stringify(joinSessionCommand(participantNameInput.value, sessionCodeInput.value));
+        sendMessage(command);
+        sessionCodeInput.value = "";
+        participantNameInput.value = "";
+    };
+
+    function joinSessionCommand(participantName, sessionCode) {
+        let message = {
+            participantName: participantName,
+            sessionCode: sessionCode
+        }
+        return new Command("JOIN_SESSION", message)
+    }
+
+    // Vote command
+    const voteCommandButton = document.getElementById("voteCommand");
+    const selectedCardInput = document.getElementById("selectedCard");
+
+    voteCommandButton.onclick = function (event) {
+        let command = JSON.stringify(voteCommand(selectedCardInput.value));
+        sendMessage(command);
+        selectedCardInput.value = "";
+    };
+
+    function voteCommand(selectedCard) {
+        let message = {
+            selectedCard: selectedCard
+        }
+        return new Command("VOTE", message)
+    }
+
+    // Leave session command
+    const leaveSessionCommandButton = document.getElementById("leaveSessionCommand");
+
+    leaveSessionCommandButton.onclick = function (event) {
+        let command = JSON.stringify( { type: "LEAVE_SESSION"});
+        sendMessage(command);
+    };
+</script>
+</html>
