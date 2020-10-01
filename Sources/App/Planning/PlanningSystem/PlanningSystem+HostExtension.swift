@@ -37,7 +37,7 @@ extension PlanningSystem {
     
     private func execute(startSessionMessage: PlanningStartSessionMessage, webSocket: WebSocket) {
         guard let sessionId = generateSessionId() else {
-            //TODO: MAM-112: Invalid command, out of capacity
+            sendInvalidCommand(error: .noServerCapacity, type: .host, webSocket: webSocket)
             return
         }
         let client = PlanningWebSocketClient(id: UUID(), socket: webSocket, sessionId: sessionId, type: .host)

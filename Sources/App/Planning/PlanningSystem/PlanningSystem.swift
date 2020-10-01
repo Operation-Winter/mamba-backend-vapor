@@ -26,17 +26,34 @@ class PlanningSystem {
         switch type {
         case .host:
             guard let command = buffer.decodeWebSocketMessage(PlanningCommands.HostServerReceive.self) else {
-                //TODO: MAM-112: Invalid command
+                sendInvalidCommand(error: .doesntExist, type: .host, webSocket: webSocket)
                 return
             }
             execute(command: command, webSocket: webSocket)
         case .join:
             guard let command = buffer.decodeWebSocketMessage(PlanningCommands.JoinServerReceive.self) else {
-                //TODO: MAM-112: Invalid command
+                sendInvalidCommand(error: .doesntExist, type: .join, webSocket: webSocket)
                 return
             }
             execute(command: command, webSocket: webSocket)
         }
+    }
+    
+    func sendInvalidCommand(error: PlanningInvalidCommandError, type: PlanningSystemType, webSocket: WebSocket) {
+        let message = PlanningInvalidCommandMessage(code: error.code, description: error.description)
+        var commandData: Data?
+        
+        switch type {
+        case .host:
+            let command = PlanningCommands.HostServerSend.invalidCommand(message)
+            commandData = try? JSONEncoder().encode(command)
+        case .join:
+            let command = PlanningCommands.JoinServerSend.invalidCommand(message)
+            commandData = try? JSONEncoder().encode(command)
+        }
+        
+        guard let data = commandData else { return }
+        webSocket.send([UInt8](data))
     }
 }
 
