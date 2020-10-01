@@ -12,35 +12,35 @@ import Vapor
 extension PlanningSystem {
     func execute(command: PlanningCommands.HostServerReceive, webSocket: WebSocket) {
         switch command {
-        case .startSession(let message):
-            execute(startSessionMessage: message, webSocket: webSocket)
-        case .addTicket(_):
-            // TODO: MAM-101
-            break
-        case .skipVote(_):
+        case .startSession(let uuid, let message):
+            execute(startSessionMessage: message, webSocket: webSocket, uuid: uuid)
+        case .addTicket(let uuid, let message):
+            execute(addTicketMessage: message, webSocket: webSocket, uuid: uuid)
+        case .skipVote(let uuid, let message):
             // TODO: MAM-102
             break
-        case .removeParticipant(_):
+        case .removeParticipant(let uuid, let message):
             // TODO: MAM-104
             break
-        case .endSession:
+        case .endSession(let uuid):
             // TODO: MAM-103
             break
-        case .finishVoting:
+        case .finishVoting(let uuid):
             // TODO: MAM-105
             break
-        case .revote:
+        case .revote(let uuid):
             // TODO: MAM-106
             break
         }
     }
-    
-    private func execute(startSessionMessage: PlanningStartSessionMessage, webSocket: WebSocket) {
+
+    // MARK: Start session command
+    private func execute(startSessionMessage: PlanningStartSessionMessage, webSocket: WebSocket, uuid: UUID) {
         guard let sessionId = generateSessionId() else {
             sendInvalidCommand(error: .noServerCapacity, type: .host, webSocket: webSocket)
             return
         }
-        let client = PlanningWebSocketClient(id: UUID(), socket: webSocket, sessionId: sessionId, type: .host)
+        let client = PlanningWebSocketClient(id: uuid, socket: webSocket, sessionId: sessionId, type: .host)
         let session = PlanningSession(id: sessionId,
                                       name: startSessionMessage.sessionName,
                                       availableCards: startSessionMessage.availableCards,
@@ -62,5 +62,21 @@ extension PlanningSystem {
         }
         
         return sessionId
+    }
+    
+    // MARK: Add ticket command
+    private func execute(addTicketMessage: PlanningAddTicketMessage, webSocket: WebSocket, uuid: UUID) {
+        guard
+            let client = clients.find(uuid),
+            let session = sessions.find(id: client.sessionId)
+        else {
+            sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
+            return
+        }
+        client.socket = webSocket
+        let ticket = PlanningTicket(title: addTicketMessage.title,
+                                    description: addTicketMessage.description)
+        session.add(ticket: ticket)
+        session.sendStateToAll()
     }
 }

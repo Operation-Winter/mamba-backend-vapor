@@ -32,6 +32,10 @@ class WebSocketClients<T: WebSocketClient> {
         storage[uuid]
     }
     
+    func exists(_ uuid: UUID) -> Bool {
+        storage.keys.contains(uuid)
+    }
+    
     deinit {
         let futures = storage.values.map { $0.socket.close() }
         try? self.eventLoop.flatten(futures).wait()

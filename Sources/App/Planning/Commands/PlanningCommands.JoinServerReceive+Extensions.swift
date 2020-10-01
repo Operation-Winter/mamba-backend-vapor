@@ -10,6 +10,7 @@ import Foundation
 
 public extension PlanningCommands.JoinServerReceive {
     private enum CodingKeys: String, CodingKey {
+        case uuid
         case type
         case message
     }
@@ -17,16 +18,17 @@ public extension PlanningCommands.JoinServerReceive {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let type = try container.decode(String.self, forKey: .type)
+        let uuid = try container.decode(UUID.self, forKey: .uuid)
         
         switch type {
         case PlanningCommands.JoinKey.joinSession.rawValue:
             let model = try container.decode(PlanningJoinSessionMessage.self, forKey: .message)
-            self = .joinSession(model)
+            self = .joinSession(uuid: uuid, message: model)
         case PlanningCommands.JoinKey.vote.rawValue:
             let model = try container.decode(PlanningVoteMessage.self, forKey: .message)
-            self = .vote(model)
+            self = .vote(uuid: uuid, message: model)
         case PlanningCommands.JoinKey.leaveSession.rawValue:
-            self = .leaveSession
+            self = .leaveSession(uuid: uuid)
         default:
             throw DecodingError.keyNotFound(CodingKeys.message, DecodingError.Context(codingPath: [], debugDescription: "Invalid key: \(type)"))
         }
@@ -37,8 +39,8 @@ public extension PlanningCommands.JoinServerReceive {
         try container.encode(self.rawValue, forKey: .type)
         
         switch self {
-        case .joinSession(let message): try container.encode(message, forKey: .message)
-        case .vote(let message): try container.encode(message, forKey: .message)
+        case .joinSession(_, let message): try container.encode(message, forKey: .message)
+        case .vote(_, let message): try container.encode(message, forKey: .message)
         default:
             break
         }
@@ -46,7 +48,7 @@ public extension PlanningCommands.JoinServerReceive {
     
     var rawValue: String {
         switch self {
-        case .joinSession(_): return PlanningCommands.JoinKey.joinSession.rawValue
+        case .joinSession: return PlanningCommands.JoinKey.joinSession.rawValue
         case .vote: return PlanningCommands.JoinKey.vote.rawValue
         case .leaveSession: return PlanningCommands.JoinKey.leaveSession.rawValue
         }

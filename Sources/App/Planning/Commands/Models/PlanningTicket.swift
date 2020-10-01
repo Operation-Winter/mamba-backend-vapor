@@ -9,12 +9,12 @@
 import Foundation
 
 public class PlanningTicket: Codable {
-    public private(set) var identifier: String
+    public private(set) var title: String
     public private(set) var description: String
     public private(set) var ticketVotes: [PlanningTicketVote]
     
-    public init(identifier: String, description: String, ticketVotes: [PlanningTicketVote]) {
-        self.identifier = identifier
+    public init(title: String, description: String, ticketVotes: [PlanningTicketVote] = []) {
+        self.title = title
         self.description = description
         self.ticketVotes = ticketVotes
     }

@@ -51,4 +51,9 @@ class PlanningSession {
     func add(participant: PlanningParticipant) {
         participants.append(participant)
     }
+    
+    func add(ticket: PlanningTicket) {
+        self.ticket = ticket
+        state = .voting
+    }
 }

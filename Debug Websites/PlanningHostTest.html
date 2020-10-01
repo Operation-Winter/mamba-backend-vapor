@@ -29,7 +29,7 @@
                 <button id="addTicketCommand">Add Ticket</button>
             </td>
             <td>
-                <b>Identifier: </b><input id="ticketIdentifier" />
+                <b>Title: </b><input id="ticketTitle" />
             </td>
             <td>
                 <b>Description: </b><input id="ticketDescription" />
@@ -73,7 +73,12 @@
     const messageInput = document.getElementById("message");
  
     const socket = new WebSocket("ws://localhost:8080/planning/host");
-
+    const uuid = uuidv4()
+    
+    function uuidv4() {
+        return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c => (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
+    }
+    
     socket.onopen = function (event) {
         addMessageToWindow("Connected");
     };
@@ -108,6 +113,7 @@
 
     class Command {
         constructor(type, message) {
+            this.uuid = uuid
             this.type = type
             this.message = message
         }
@@ -146,19 +152,19 @@
 
     // Add Ticket Command
     const addTicketCommandButton = document.getElementById("addTicketCommand");
-    const ticketIdentifier = document.getElementById("ticketIdentifier");
+    const ticketTitle = document.getElementById("ticketTitle");
     const ticketDescription = document.getElementById("ticketDescription");
 
     addTicketCommandButton.onclick = function (event) {
-        let command = JSON.stringify(addTicketCommand(ticketIdentifier.value, ticketDescription.value));
+        let command = JSON.stringify(addTicketCommand(ticketTitle.value, ticketDescription.value));
         sendMessage(command);
-        ticketIdentifier.value = "";
+        ticketTitle.value = "";
         ticketDescription.value = "";
     };
 
-    function addTicketCommand(identifier, description) {
+    function addTicketCommand(title, description) {
         let message = {
-            identifier: identifier,
+            title: title,
             description: description
         }
         return new Command("ADD_TICKET", message)

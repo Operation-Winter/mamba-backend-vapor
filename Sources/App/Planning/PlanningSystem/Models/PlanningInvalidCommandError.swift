@@ -11,12 +11,14 @@ enum PlanningInvalidCommandError {
     case noSessionCodeSpecified
     case doesntExist
     case noServerCapacity
+    case invalidUuid
     
     var code: String {
         switch self {
         case .noSessionCodeSpecified: return "0000"
         case .doesntExist: return "0002"
         case .noServerCapacity: return "0003"
+        case .invalidUuid: return "0004"
         }
     }
     
@@ -25,6 +27,7 @@ enum PlanningInvalidCommandError {
         case .noSessionCodeSpecified: return "No session code has been specified."
         case .doesntExist: return "The command doesn't exist."
         case .noServerCapacity: return "The server has run out of capacity, could not create a new planning session."
+        case .invalidUuid: return "Invalid identifier"
         }
     }
 }

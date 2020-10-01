@@ -10,6 +10,7 @@ import Foundation
 
 public extension PlanningCommands.HostServerReceive {
     private enum CodingKeys: String, CodingKey {
+        case uuid
         case type
         case message
     }
@@ -17,26 +18,27 @@ public extension PlanningCommands.HostServerReceive {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let type = try container.decode(String.self, forKey: .type)
+        let uuid = try container.decode(UUID.self, forKey: .uuid)
         
         switch type {
         case PlanningCommands.HostKey.startSession.rawValue:
             let model = try container.decode(PlanningStartSessionMessage.self, forKey: .message)
-            self = .startSession(model)
+            self = .startSession(uuid: uuid, message: model)
         case PlanningCommands.HostKey.addTicket.rawValue:
             let model = try container.decode(PlanningAddTicketMessage.self, forKey: .message)
-            self = .addTicket(model)
+            self = .addTicket(uuid: uuid, message: model)
         case PlanningCommands.HostKey.skipVote.rawValue:
             let model = try container.decode(PlanningSkipVoteMessage.self, forKey: .message)
-            self = .skipVote(model)
+            self = .skipVote(uuid: uuid, message: model)
         case PlanningCommands.HostKey.removeParticipant.rawValue:
             let model = try container.decode(PlanningRemoveParticipantMessage.self, forKey: .message)
-            self = .removeParticipant(model)
+            self = .removeParticipant(uuid: uuid, message: model)
         case PlanningCommands.HostKey.endSession.rawValue:
-            self = .endSession
+            self = .endSession(uuid: uuid)
         case PlanningCommands.HostKey.finishVoting.rawValue:
-            self = .finishVoting
+            self = .finishVoting(uuid: uuid)
         case PlanningCommands.HostKey.revote.rawValue:
-            self = .revote
+            self = .revote(uuid: uuid)
         default:
             throw DecodingError.keyNotFound(CodingKeys.message, DecodingError.Context(codingPath: [], debugDescription: "Invalid key: \(type)"))
         }
@@ -47,10 +49,10 @@ public extension PlanningCommands.HostServerReceive {
         try container.encode(self.rawValue, forKey: .type)
         
         switch self {
-        case .startSession(let message): try container.encode(message, forKey: .message)
-        case .addTicket(let message): try container.encode(message, forKey: .message)
-        case .skipVote(let message): try container.encode(message, forKey: .message)
-        case .removeParticipant(let message): try container.encode(message, forKey: .message)
+        case .startSession(_, let message): try container.encode(message, forKey: .message)
+        case .addTicket(_, let message): try container.encode(message, forKey: .message)
+        case .skipVote(_, let message): try container.encode(message, forKey: .message)
+        case .removeParticipant(_, let message): try container.encode(message, forKey: .message)
         default:
             break
         }

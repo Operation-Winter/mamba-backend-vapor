@@ -27,13 +27,13 @@ public enum PlanningCommands {
     }
 
     public enum HostServerReceive: Codable {
-        case startSession(PlanningStartSessionMessage)
-        case addTicket(PlanningAddTicketMessage)
-        case skipVote(PlanningSkipVoteMessage)
-        case removeParticipant(PlanningRemoveParticipantMessage)
-        case endSession
-        case finishVoting
-        case revote
+        case startSession(uuid: UUID, message: PlanningStartSessionMessage)
+        case addTicket(uuid: UUID, message: PlanningAddTicketMessage)
+        case skipVote(uuid: UUID, message: PlanningSkipVoteMessage)
+        case removeParticipant(uuid: UUID, message: PlanningRemoveParticipantMessage)
+        case endSession(uuid: UUID)
+        case finishVoting(uuid: UUID)
+        case revote(uuid: UUID)
     }
     
     public enum HostServerSend: Codable {
@@ -60,9 +60,9 @@ public enum PlanningCommands {
     }
     
     public enum JoinServerReceive: Codable {
-        case joinSession(PlanningJoinSessionMessage)
-        case vote(PlanningVoteMessage)
-        case leaveSession
+        case joinSession(uuid: UUID, message: PlanningJoinSessionMessage)
+        case vote(uuid: UUID, message: PlanningVoteMessage)
+        case leaveSession(uuid: UUID)
     }
     
     public enum JoinServerSend: Codable {

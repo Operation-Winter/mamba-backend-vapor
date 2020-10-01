@@ -9,6 +9,6 @@
 import Foundation
 
 public struct PlanningAddTicketMessage: Codable {
-    public let identifier: String
+    public let title: String
     public let description: String
 }
