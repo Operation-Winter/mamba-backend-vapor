@@ -43,7 +43,17 @@ public extension PlanningCommands.JoinServerSend {
     }
     
     func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(self.rawValue, forKey: .type)
         
+        switch self {
+        case .noneState(let message): try container.encode(message, forKey: .message)
+        case .votingState(let message): try container.encode(message, forKey: .message)
+        case .finishedState(let message): try container.encode(message, forKey: .message)
+        case .invalidCommand(let message): try container.encode(message, forKey: .message)
+        default:
+            break
+        }
     }
     
     var rawValue: String {

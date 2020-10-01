@@ -55,6 +55,11 @@ class PlanningSystem {
         guard let data = commandData else { return }
         webSocket.send([UInt8](data))
     }
+    
+    func sendInvalidSessionCommand(error: PlanningInvalidSessionError, webSocket: WebSocket) {
+        guard let data = try? JSONEncoder().encode(PlanningCommands.JoinServerSend.invalidSession) else { return }
+        webSocket.send([UInt8](data))
+    }
 }
 
 extension PlanningSystem: PlanningSessionDelegate {

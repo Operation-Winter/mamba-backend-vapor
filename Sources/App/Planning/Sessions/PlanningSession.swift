@@ -47,4 +47,8 @@ class PlanningSession {
             delegate?.send(command: PlanningCommands.JoinServerSend.finishedState(stateMessage), sessionId: id)
         }
     }
+    
+    func add(participant: PlanningParticipant) {
+        participants.append(participant)
+    }
 }
