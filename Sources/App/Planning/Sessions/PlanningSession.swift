@@ -56,4 +56,23 @@ class PlanningSession {
         self.ticket = ticket
         state = .voting
     }
+    
+    func add(vote card: PlanningCard, uuid: UUID) {
+        guard
+            state == .voting,
+            availableCards.contains(card),
+            let ticket = ticket,
+            let participant = participants.first(where: { $0.id == uuid })
+        else {
+            delegate?.sendInvalidCommand(error: .invalidParameters, type: .join, clientUuid: uuid)
+            return
+        }
+        ticket.removeVotes(participantId: uuid)
+        let vote = PlanningTicketVote(user: participant, selectedCard: card)
+        ticket.add(vote: vote)
+        
+        if ticket.ticketVotes.count == participants.count {
+            state = .votingFinished
+        }
+    }
 }

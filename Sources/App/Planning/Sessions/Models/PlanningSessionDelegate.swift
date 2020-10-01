@@ -12,4 +12,6 @@ protocol PlanningSessionDelegate: class {
     func send(command: PlanningCommands.JoinServerSend, clientUuid: UUID)
     func send(command: PlanningCommands.HostServerSend, sessionId: String)
     func send(command: PlanningCommands.JoinServerSend, sessionId: String)
+    func sendInvalidCommand(error: PlanningInvalidCommandError, type: PlanningSystemType, clientUuid: UUID)
+    func sendInvalidSessionCommand(error: PlanningInvalidSessionError, clientUuid: UUID)
 }

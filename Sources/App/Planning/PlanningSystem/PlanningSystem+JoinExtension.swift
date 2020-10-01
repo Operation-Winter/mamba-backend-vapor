@@ -15,16 +15,16 @@ extension PlanningSystem {
         case .joinSession(let uuid, let message):
             execute(joinSessionMessage: message, webSocket: webSocket, uuid: uuid)
         case .vote(let uuid, let message):
-            // TODO: MAM-114
-            break
+            execute(voteMessage: message, webSocket: webSocket, uuid: uuid)
         case .leaveSession(let uuid):
             // TODO: MAM-115
             break
         }
     }
     
-    func execute(joinSessionMessage: PlanningJoinSessionMessage, webSocket: WebSocket, uuid: UUID) {
-        guard let session = sessions.find(id: joinSessionMessage.sessionCode) else {
+    // MARK: Join session command
+    func execute(joinSessionMessage message: PlanningJoinSessionMessage, webSocket: WebSocket, uuid: UUID) {
+        guard let session = sessions.find(id: message.sessionCode) else {
             sendInvalidSessionCommand(error: .doesntExist, webSocket: webSocket)
             return
         }
@@ -32,9 +32,22 @@ extension PlanningSystem {
         let client = PlanningWebSocketClient(id: uuid, socket: webSocket, sessionId: session.id, type: .join)
         clients.add(client)
         
-        let participant = PlanningParticipant(id: client.id, name: joinSessionMessage.participantName)
+        let participant = PlanningParticipant(id: client.id, name: message.participantName)
         session.add(participant: participant)
-        
+        session.sendStateToAll()
+    }
+    
+    // MARK: Vote command
+    func execute(voteMessage message: PlanningVoteMessage, webSocket: WebSocket, uuid: UUID) {
+        guard
+            let client = clients.find(uuid),
+            let session = sessions.find(id: client.sessionId)
+        else {
+            sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
+            return
+        }
+        client.socket = webSocket
+        session.add(vote: message.selectedCard, uuid: uuid)
         session.sendStateToAll()
     }
 }

@@ -63,6 +63,16 @@ class PlanningSystem {
 }
 
 extension PlanningSystem: PlanningSessionDelegate {
+    func sendInvalidCommand(error: PlanningInvalidCommandError, type: PlanningSystemType, clientUuid: UUID) {
+        guard let client = clients.find(clientUuid) else { return }
+        sendInvalidCommand(error: error, type: type, webSocket: client.socket)
+    }
+    
+    func sendInvalidSessionCommand(error: PlanningInvalidSessionError, clientUuid: UUID) {
+        guard let client = clients.find(clientUuid) else { return }
+        sendInvalidSessionCommand(error: error, webSocket: client.socket)
+    }
+    
     func send(command: PlanningCommands.HostServerSend, clientUuid: UUID) {
         guard
             let client = clients.find(clientUuid),
@@ -98,4 +108,6 @@ extension PlanningSystem: PlanningSessionDelegate {
             socketClient.socket.send([UInt8](data))
         }
     }
+    
+    
 }

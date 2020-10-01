@@ -35,15 +35,15 @@ extension PlanningSystem {
     }
 
     // MARK: Start session command
-    private func execute(startSessionMessage: PlanningStartSessionMessage, webSocket: WebSocket, uuid: UUID) {
+    private func execute(startSessionMessage message: PlanningStartSessionMessage, webSocket: WebSocket, uuid: UUID) {
         guard let sessionId = generateSessionId() else {
             sendInvalidCommand(error: .noServerCapacity, type: .host, webSocket: webSocket)
             return
         }
         let client = PlanningWebSocketClient(id: uuid, socket: webSocket, sessionId: sessionId, type: .host)
         let session = PlanningSession(id: sessionId,
-                                      name: startSessionMessage.sessionName,
-                                      availableCards: startSessionMessage.availableCards,
+                                      name: message.sessionName,
+                                      availableCards: message.availableCards,
                                       delegate: self)
         
         clients.add(client)
@@ -65,7 +65,7 @@ extension PlanningSystem {
     }
     
     // MARK: Add ticket command
-    private func execute(addTicketMessage: PlanningAddTicketMessage, webSocket: WebSocket, uuid: UUID) {
+    private func execute(addTicketMessage message: PlanningAddTicketMessage, webSocket: WebSocket, uuid: UUID) {
         guard
             let client = clients.find(uuid),
             let session = sessions.find(id: client.sessionId)
@@ -74,8 +74,8 @@ extension PlanningSystem {
             return
         }
         client.socket = webSocket
-        let ticket = PlanningTicket(title: addTicketMessage.title,
-                                    description: addTicketMessage.description)
+        let ticket = PlanningTicket(title: message.title,
+                                    description: message.description)
         session.add(ticket: ticket)
         session.sendStateToAll()
     }

@@ -12,6 +12,7 @@ enum PlanningInvalidCommandError {
     case doesntExist
     case noServerCapacity
     case invalidUuid
+    case invalidParameters
     
     var code: String {
         switch self {
@@ -19,6 +20,7 @@ enum PlanningInvalidCommandError {
         case .doesntExist: return "0002"
         case .noServerCapacity: return "0003"
         case .invalidUuid: return "0004"
+        case .invalidParameters: return "0005"
         }
     }
     
@@ -28,6 +30,7 @@ enum PlanningInvalidCommandError {
         case .doesntExist: return "The command doesn't exist."
         case .noServerCapacity: return "The server has run out of capacity, could not create a new planning session."
         case .invalidUuid: return "Invalid identifier"
+        case .invalidParameters: return "Invalid parameters"
         }
     }
 }

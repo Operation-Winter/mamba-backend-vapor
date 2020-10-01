@@ -56,7 +56,12 @@
     const messageInput = document.getElementById("message");
  
     const socket = new WebSocket("ws://localhost:8080/planning/join");
-
+    const uuid = uuidv4()
+    
+    function uuidv4() {
+        return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c => (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
+    }
+                                                                    
     socket.onopen = function (event) {
         addMessageToWindow("Connected");
     };
@@ -92,6 +97,7 @@
     // Commands
     class Command {
         constructor(type, message) {
+            this.uuid = uuid
             this.type = type
             this.message = message
         }

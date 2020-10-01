@@ -18,4 +18,12 @@ public class PlanningTicket: Codable {
         self.description = description
         self.ticketVotes = ticketVotes
     }
+    
+    func removeVotes(participantId: UUID) {
+        ticketVotes.removeAll { $0.user.id == participantId }
+    }
+    
+    func add(vote: PlanningTicketVote) {
+        ticketVotes.append(vote)
+    }
 }
