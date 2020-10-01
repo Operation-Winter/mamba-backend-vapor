@@ -1,19 +1,13 @@
 import Vapor
 
 func routes(_ app: Application) throws {
-    app.get { req in
-        "It works!"
-    }
-
-    app.get("hello") { req -> String in
-        "Hello, world!"
-    }
+    let planningSystem = PlanningSystem(eventLoop: app.eventLoopGroup.next())
     
     app.webSocket(["planning", "host"]) { request, webSocket in
-        print("Host", webSocket)
+        planningSystem.connect(webSocket, type: .host)
     }
     
     app.webSocket(["planning", "join"]) { request, webSocket in
-        print("Join", webSocket)
+        planningSystem.connect(webSocket, type: .join)
     }
 }
