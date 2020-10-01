@@ -35,10 +35,6 @@ extension PlanningSystem {
         }
     }
     
-    func send(command: PlanningCommands.HostServerSend) {
-        
-    }
-    
     private func execute(startSessionMessage: PlanningStartSessionMessage, webSocket: WebSocket) {
         guard let sessionId = generateSessionId() else {
             //TODO: MAM-112: Invalid command, out of capacity
@@ -47,10 +43,13 @@ extension PlanningSystem {
         let client = PlanningWebSocketClient(id: UUID(), socket: webSocket, sessionId: sessionId, type: .host)
         let session = PlanningSession(id: sessionId,
                                       name: startSessionMessage.sessionName,
-                                      availableCards: startSessionMessage.availableCards)
+                                      availableCards: startSessionMessage.availableCards,
+                                      delegate: self)
         
         clients.add(client)
         sessions.add(session)
+        
+        session.sendStateToAll()
     }
     
     private func generateSessionId() -> String? {

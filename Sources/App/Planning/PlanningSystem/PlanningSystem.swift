@@ -8,11 +8,11 @@
 import Vapor
 
 class PlanningSystem {
-    private(set) var clients: WebSocketClients<PlanningWebSocketClient>
+    private(set) var clients: PlanningWebSocketClients
     private(set) var sessions: PlanningSessions
     
     init(eventLoop: EventLoop) {
-        clients = WebSocketClients(eventLoop: eventLoop)
+        clients = PlanningWebSocketClients(eventLoop: eventLoop)
         sessions = PlanningSessions()
     }
     
@@ -36,6 +36,44 @@ class PlanningSystem {
                 return
             }
             execute(command: command, webSocket: webSocket)
+        }
+    }
+}
+
+extension PlanningSystem: PlanningSessionDelegate {
+    func send(command: PlanningCommands.HostServerSend, clientUuid: UUID) {
+        guard
+            let client = clients.find(clientUuid),
+            let data = try? JSONEncoder().encode(command)
+        else {
+            return
+        }
+        client.socket.send([UInt8](data))
+    }
+    
+    func send(command: PlanningCommands.JoinServerSend, clientUuid: UUID) {
+        guard
+            let client = clients.find(clientUuid),
+            let data = try? JSONEncoder().encode(command)
+        else {
+            return
+        }
+        client.socket.send([UInt8](data))
+    }
+    
+    func send(command: PlanningCommands.HostServerSend, sessionId: String) {
+        guard let data = try? JSONEncoder().encode(command) else { return }
+        let socketClients = clients.find(sessionId: sessionId, type: .host)
+        socketClients.forEach { socketClient in
+            socketClient.socket.send([UInt8](data))
+        }
+    }
+    
+    func send(command: PlanningCommands.JoinServerSend, sessionId: String) {
+        guard let data = try? JSONEncoder().encode(command) else { return }
+        let socketClients = clients.find(sessionId: sessionId, type: .join)
+        socketClients.forEach { socketClient in
+            socketClient.socket.send([UInt8](data))
         }
     }
 }

@@ -23,8 +23,4 @@ extension PlanningSystem {
             break
         }
     }
-    
-    func send(command: PlanningCommands.JoinServerSend) {
-        
-    }
 }
