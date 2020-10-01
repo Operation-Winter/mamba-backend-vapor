@@ -8,5 +8,6 @@
 import Foundation
 
 enum PlanningSystemType {
-    case host, join
+    case host
+    case join
 }

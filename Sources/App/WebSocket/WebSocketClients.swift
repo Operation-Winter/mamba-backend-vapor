@@ -7,28 +7,28 @@
 
 import Vapor
 
-class WebSocketClients {
+class WebSocketClients<T: WebSocketClient> {
     var eventLoop: EventLoop
-    var storage: [UUID: WebSocketClient]
+    var storage: [UUID: T]
     
-    var active: [WebSocketClient] {
+    var active: [T] {
         storage.values.filter { !$0.socket.isClosed }
     }
     
-    init(eventLoop: EventLoop, storage: [UUID : WebSocketClient] = [:]) {
+    init(eventLoop: EventLoop, storage: [UUID : T] = [:]) {
         self.eventLoop = eventLoop
         self.storage = storage
     }
     
-    func add(_ client: WebSocketClient) {
+    func add(_ client: T) {
         storage[client.id] = client
     }
     
-    func remove(_ client: WebSocketClient) {
+    func remove(_ client: T) {
         storage[client.id] = nil
     }
     
-    func find(_ uuid: UUID) -> WebSocketClient? {
+    func find(_ uuid: UUID) -> T? {
         storage[uuid]
     }
     
