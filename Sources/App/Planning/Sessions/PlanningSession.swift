@@ -61,17 +61,22 @@ class PlanningSession {
         guard
             state == .voting,
             let ticket = ticket,
-            let participant = participants.first(where: { $0.id == uuid })
+            participants.contains(where: { $0.participantId == uuid })
         else {
             delegate?.sendInvalidCommand(error: .invalidParameters, type: .join, clientUuid: uuid)
             return
         }
         ticket.removeVotes(participantId: uuid)
-        let vote = PlanningTicketVote(user: participant, selectedCard: card)
+        let vote = PlanningTicketVote(participantId: uuid, selectedCard: card)
         ticket.add(vote: vote)
         
         if ticket.ticketVotes.count == participants.count {
             state = .votingFinished
         }
+    }
+    
+    func resetVotes() {
+        ticket?.removeVotesAll()
+        state = .voting
     }
 }

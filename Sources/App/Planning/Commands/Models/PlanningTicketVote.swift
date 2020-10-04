@@ -9,11 +9,14 @@
 import Foundation
 
 public class PlanningTicketVote: Codable {
-    public private(set) var user: PlanningParticipant
+    public private(set) var participantId: UUID
     public private(set) var selectedCard: PlanningCard?
+    public var skipped: Bool {
+        selectedCard == nil
+    }
     
-    init(user: PlanningParticipant, selectedCard: PlanningCard?) {
-        self.user = user
+    init(participantId: UUID, selectedCard: PlanningCard?) {
+        self.participantId = participantId
         self.selectedCard = selectedCard
     }
 }

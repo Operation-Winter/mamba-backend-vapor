@@ -9,13 +9,11 @@
 import Foundation
 
 public class PlanningParticipant: Codable, Identifiable {
-    public private(set) var id: UUID
+    public private(set) var participantId: UUID
     public private(set) var name: String
-    public var selectedCard: PlanningCard? = nil
-    public var skipped: Bool? = false
     
-    public init(id: UUID, name: String) {
-        self.id = id
+    public init(participantId: UUID, name: String) {
+        self.participantId = participantId
         self.name = name
     }
 }

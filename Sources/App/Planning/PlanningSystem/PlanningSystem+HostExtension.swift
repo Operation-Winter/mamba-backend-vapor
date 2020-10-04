@@ -13,11 +13,11 @@ extension PlanningSystem {
     func execute(command: PlanningCommands.HostServerReceive, webSocket: WebSocket) {
         switch command {
         case .startSession(let uuid, let message):
-            execute(startSessionMessage: message, webSocket: webSocket, uuid: uuid)
+            startSession(message: message, webSocket: webSocket, uuid: uuid)
         case .addTicket(let uuid, let message):
-            execute(addTicketMessage: message, webSocket: webSocket, uuid: uuid)
+            addTicket(message: message, webSocket: webSocket, uuid: uuid)
         case .skipVote(let uuid, let message):
-            execute(skipVote: message, webSocket: webSocket, uuid: uuid)
+            skipVote(message: message, webSocket: webSocket, uuid: uuid)
         case .removeParticipant(let uuid, let message):
             // TODO: MAM-104
             break
@@ -28,13 +28,12 @@ extension PlanningSystem {
             // TODO: MAM-105
             break
         case .revote(let uuid):
-            // TODO: MAM-106
-            break
+            revote(webSocket: webSocket, uuid: uuid)
         }
     }
 
     // MARK: Start session command
-    private func execute(startSessionMessage message: PlanningStartSessionMessage, webSocket: WebSocket, uuid: UUID) {
+    private func startSession(message: PlanningStartSessionMessage, webSocket: WebSocket, uuid: UUID) {
         guard let sessionId = generateSessionId() else {
             sendInvalidCommand(error: .noServerCapacity, type: .host, webSocket: webSocket)
             return
@@ -64,7 +63,7 @@ extension PlanningSystem {
     }
     
     // MARK: Add ticket command
-    private func execute(addTicketMessage message: PlanningAddTicketMessage, webSocket: WebSocket, uuid: UUID) {
+    private func addTicket(message: PlanningAddTicketMessage, webSocket: WebSocket, uuid: UUID) {
         guard
             let client = clients.find(uuid),
             let session = sessions.find(id: client.sessionId)
@@ -79,8 +78,8 @@ extension PlanningSystem {
         session.sendStateToAll()
     }
     
-    // MARK: Add ticket command
-    private func execute(skipVote message: PlanningSkipVoteMessage, webSocket: WebSocket, uuid: UUID) {
+    // MARK: Skip vote command
+    private func skipVote(message: PlanningSkipVoteMessage, webSocket: WebSocket, uuid: UUID) {
         guard
             let client = clients.find(uuid),
             let session = sessions.find(id: client.sessionId)
@@ -90,6 +89,20 @@ extension PlanningSystem {
         }
         client.socket = webSocket
         session.add(vote: nil, uuid: message.participantId)
+        session.sendStateToAll()
+    }
+    
+    // MARK: Revote command
+    private func revote(webSocket: WebSocket, uuid: UUID) {
+        guard
+            let client = clients.find(uuid),
+            let session = sessions.find(id: client.sessionId)
+        else {
+            sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
+            return
+        }
+        client.socket = webSocket
+        session.resetVotes()
         session.sendStateToAll()
     }
 }
