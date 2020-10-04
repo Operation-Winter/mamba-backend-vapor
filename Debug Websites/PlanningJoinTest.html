@@ -144,7 +144,10 @@
     const leaveSessionCommandButton = document.getElementById("leaveSessionCommand");
 
     leaveSessionCommandButton.onclick = function (event) {
-        let command = JSON.stringify( { type: "LEAVE_SESSION"});
+        let command = JSON.stringify( {
+            uuid: uuid,
+            type: "LEAVE_SESSION"
+        });
         sendMessage(command);
     };
 </script>
