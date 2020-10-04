@@ -9,5 +9,5 @@
 import Foundation
 
 public struct PlanningSkipVoteMessage: Codable {
-    public let participantId: String
+    public let participantId: UUID
 }

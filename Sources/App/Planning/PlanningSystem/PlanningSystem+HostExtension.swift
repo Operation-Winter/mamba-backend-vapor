@@ -17,8 +17,7 @@ extension PlanningSystem {
         case .addTicket(let uuid, let message):
             execute(addTicketMessage: message, webSocket: webSocket, uuid: uuid)
         case .skipVote(let uuid, let message):
-            // TODO: MAM-102
-            break
+            execute(skipVote: message, webSocket: webSocket, uuid: uuid)
         case .removeParticipant(let uuid, let message):
             // TODO: MAM-104
             break
@@ -77,6 +76,20 @@ extension PlanningSystem {
         let ticket = PlanningTicket(title: message.title,
                                     description: message.description)
         session.add(ticket: ticket)
+        session.sendStateToAll()
+    }
+    
+    // MARK: Add ticket command
+    private func execute(skipVote message: PlanningSkipVoteMessage, webSocket: WebSocket, uuid: UUID) {
+        guard
+            let client = clients.find(uuid),
+            let session = sessions.find(id: client.sessionId)
+        else {
+            sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
+            return
+        }
+        client.socket = webSocket
+        session.add(vote: nil, uuid: message.participantId)
         session.sendStateToAll()
     }
 }

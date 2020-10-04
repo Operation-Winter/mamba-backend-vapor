@@ -57,10 +57,9 @@ class PlanningSession {
         state = .voting
     }
     
-    func add(vote card: PlanningCard, uuid: UUID) {
+    func add(vote card: PlanningCard?, uuid: UUID) {
         guard
             state == .voting,
-            availableCards.contains(card),
             let ticket = ticket,
             let participant = participants.first(where: { $0.id == uuid })
         else {
