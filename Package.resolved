@@ -30,11 +30,11 @@
       },
       {
         "package": "mamba-networking",
-        "repositoryURL": "https://github.com/Operation-Winter/mamba-ios-networking.git",
+        "repositoryURL": "https://github.com/Operation-Winter/mamba-networking.git",
         "state": {
           "branch": null,
-          "revision": "deaa5e002868be8e9d3543e7d7411b6e9939ea2e",
-          "version": "1.0.1"
+          "revision": "f1c5dabdcf4bffd732b8d190de2936a8d975bde6",
+          "version": "1.0.5"
         }
       },
       {
