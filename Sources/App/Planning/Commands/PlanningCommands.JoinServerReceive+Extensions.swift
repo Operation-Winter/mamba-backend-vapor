@@ -29,6 +29,8 @@ public extension PlanningCommands.JoinServerReceive {
             self = .vote(uuid: uuid, message: model)
         case PlanningCommands.JoinKey.leaveSession.rawValue:
             self = .leaveSession(uuid: uuid)
+        case PlanningCommands.JoinKey.reconnect.rawValue:
+            self = .reconnect(uuid: uuid)
         default:
             throw DecodingError.keyNotFound(CodingKeys.message, DecodingError.Context(codingPath: [], debugDescription: "Invalid key: \(type)"))
         }
@@ -51,6 +53,7 @@ public extension PlanningCommands.JoinServerReceive {
         case .joinSession: return PlanningCommands.JoinKey.joinSession.rawValue
         case .vote: return PlanningCommands.JoinKey.vote.rawValue
         case .leaveSession: return PlanningCommands.JoinKey.leaveSession.rawValue
+        case .reconnect: return PlanningCommands.JoinKey.reconnect.rawValue
         }
     }
 }

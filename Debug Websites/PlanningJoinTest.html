@@ -40,6 +40,11 @@
                 <button id="leaveSessionCommand">Leave Session Command</button>
             </td>
         </tr>
+        <tr>
+            <td>
+                <button id="reconnectCommand">Reconnect</button>
+            </td>
+        </tr>
     </table>
 
     <div class="input-fields">
@@ -55,30 +60,35 @@
     const sendButton = document.getElementById("send");
     const messageInput = document.getElementById("message");
  
-    const socket = new WebSocket("ws://localhost:8080/planning/join");
+    var socket = createSocket();
     const uuid = uuidv4()
     
     function uuidv4() {
         return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c => (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
     }
                                                                     
-    socket.onopen = function (event) {
-        addMessageToWindow("Connected");
-    };
+    function createSocket() {
+        var socket = new WebSocket("ws://localhost:8080/planning/join");
+        socket.onopen = function (event) {
+            addMessageToWindow("Connected");
+        };
 
-    socket.onclose = function (e) {
-        addMessageToWindow("Disconnected");
+        socket.onmessage = function (event) {
+            let fileReader = new FileReader()
+
+            fileReader.onload = function (e) {
+                let command = new TextDecoder("utf8").decode(e.target.result);
+                addMessageToWindow(`<p style="background-color:lightcyan">Got Message: ${command}</p>`);
+            }
+            fileReader.readAsArrayBuffer(event.data);
+        };
+
+        socket.onclose = function (e) {
+            addMessageToWindow("Disconnected");
+        };
+
+        return socket;
     }
- 
-    socket.onmessage = function (event) {
-        let fileReader = new FileReader()
-        
-        fileReader.onload = function (e) {
-            let command = new TextDecoder("utf8").decode(e.target.result);
-            addMessageToWindow(`<p style="background-color:lightcyan">Got Message: ${command}</p>`);
-        }
-        fileReader.readAsArrayBuffer(event.data);
-    };
  
     sendButton.onclick = function (event) {
         sendMessage(messageInput.value);
@@ -149,6 +159,21 @@
             type: "LEAVE_SESSION"
         });
         sendMessage(command);
+    };
+
+    // Reconnect
+    const reconnectCommandButton = document.getElementById("reconnectCommand");
+    reconnectCommandButton.onclick = function (event) {
+        socket.close()
+        socket = createSocket();
+
+        setTimeout(function(){
+            let command = JSON.stringify({
+                uuid: uuid,
+                type: "RECONNECT"
+            });
+            sendMessage(command);
+        }, 200);
     };
 </script>
 </html>

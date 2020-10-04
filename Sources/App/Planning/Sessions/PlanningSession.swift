@@ -34,18 +34,12 @@ class PlanningSession {
         self.delegate = delegate
     }
     
+    func sendState(to uuid: UUID) {
+        delegate?.send(stateMessage: stateMessage, state: state, clientUuid: uuid)
+    }
+    
     func sendStateToAll() {
-        switch state {
-        case .none:
-            delegate?.send(command: PlanningCommands.HostServerSend.noneState(stateMessage), sessionId: id)
-            delegate?.send(command: PlanningCommands.JoinServerSend.noneState(stateMessage), sessionId: id)
-        case .voting:
-            delegate?.send(command: PlanningCommands.HostServerSend.votingState(stateMessage), sessionId: id)
-            delegate?.send(command: PlanningCommands.JoinServerSend.votingState(stateMessage), sessionId: id)
-        case .votingFinished:
-            delegate?.send(command: PlanningCommands.HostServerSend.finishedState(stateMessage), sessionId: id)
-            delegate?.send(command: PlanningCommands.JoinServerSend.finishedState(stateMessage), sessionId: id)
-        }
+        delegate?.send(stateMessage: stateMessage, state: state, sessionId: id)
     }
     
     func add(participant: PlanningParticipant) {

@@ -39,6 +39,8 @@ public extension PlanningCommands.HostServerReceive {
             self = .finishVoting(uuid: uuid)
         case PlanningCommands.HostKey.revote.rawValue:
             self = .revote(uuid: uuid)
+        case PlanningCommands.HostKey.reconnect.rawValue:
+            self = .reconnect(uuid: uuid)
         default:
             throw DecodingError.keyNotFound(CodingKeys.message, DecodingError.Context(codingPath: [], debugDescription: "Invalid key: \(type)"))
         }
@@ -74,6 +76,8 @@ public extension PlanningCommands.HostServerReceive {
             return PlanningCommands.HostKey.finishVoting.rawValue
         case .revote:
             return PlanningCommands.HostKey.revote.rawValue
+        case .reconnect:
+            return PlanningCommands.HostKey.reconnect.rawValue
         }
     }
 }

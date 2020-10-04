@@ -45,10 +45,10 @@ class PlanningSystem {
         
         switch type {
         case .host:
-            let command = PlanningCommands.HostServerSend.invalidCommand(message)
+            let command = PlanningCommands.HostServerSend.invalidCommand(message: message)
             commandData = try? JSONEncoder().encode(command)
         case .join:
-            let command = PlanningCommands.JoinServerSend.invalidCommand(message)
+            let command = PlanningCommands.JoinServerSend.invalidCommand(message: message)
             commandData = try? JSONEncoder().encode(command)
         }
         
@@ -60,9 +60,103 @@ class PlanningSystem {
         guard let data = try? JSONEncoder().encode(PlanningCommands.JoinServerSend.invalidSession) else { return }
         webSocket.send([UInt8](data))
     }
+    
+    func reconnect(webSocket: WebSocket, uuid: UUID) {
+        guard
+            let client = clients.find(uuid),
+            let session = sessions.find(id: client.sessionId)
+        else {
+            sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
+            return
+        }
+        client.socket = webSocket
+        session.sendState(to: uuid)
+    }
 }
 
 extension PlanningSystem: PlanningSessionDelegate {
+    func send<T: Encodable>(command: T, clientUuid: UUID) {
+        guard
+            let client = clients.find(clientUuid),
+            let data = try? JSONEncoder().encode(command)
+        else { return }
+        client.socket.send([UInt8](data))
+    }
+    
+    func send(hostCommand command: PlanningCommands.HostServerSend, clientUuid: UUID) {
+        send(command: command, clientUuid: clientUuid)
+    }
+    
+    func send(joinCommand command: PlanningCommands.JoinServerSend, clientUuid: UUID) {
+        send(command: command, clientUuid: clientUuid)
+    }
+    
+    private func send<T: Encodable>(command: T, clients: [WebSocketClient]) {
+        guard let data = try? JSONEncoder().encode(command) else { return }
+        clients.forEach { socketClient in
+            socketClient.socket.send([UInt8](data))
+        }
+    }
+    
+    func send(hostCommand command: PlanningCommands.HostServerSend, sessionId: String) {
+        let socketClients = clients.find(sessionId: sessionId, type: .host)
+        send(command: command, clients: socketClients)
+    }
+    
+    func send(joinCommand command: PlanningCommands.JoinServerSend, sessionId: String) {
+        let socketClients = clients.find(sessionId: sessionId, type: .join)
+        send(command: command, clients: socketClients)
+    }
+    
+    func send(stateMessage: PlanningSessionStateMessage, state: PlanningSessionState, sessionId: String) {
+        switch state {
+        case .none:
+            send(hostCommand: .noneState(message: stateMessage), sessionId: sessionId)
+            send(joinCommand: .noneState(message: stateMessage), sessionId: sessionId)
+        case .voting:
+            send(hostCommand: .votingState(message: stateMessage), sessionId: sessionId)
+            send(joinCommand: .votingState(message: stateMessage), sessionId: sessionId)
+        case .votingFinished:
+            send(hostCommand: .finishedState(message: stateMessage), sessionId: sessionId)
+            send(joinCommand: .finishedState(message: stateMessage), sessionId: sessionId)
+        }
+    }
+    
+    func send(stateMessage: PlanningSessionStateMessage, state: PlanningSessionState, clientUuid: UUID) {
+        guard let client = clients.find(clientUuid) else { return }
+        
+        switch client.type {
+        case .host:
+            let command = makeHostServerSendCommand(state: state, message: stateMessage)
+            send(command: command, clientUuid: clientUuid)
+        case .join:
+            let command = makeJoinServerSendCommand(state: state, message: stateMessage)
+            send(command: command, clientUuid: clientUuid)
+        }
+    }
+    
+    private func makeHostServerSendCommand(state: PlanningSessionState, message: PlanningSessionStateMessage) -> PlanningCommands.HostServerSend {
+        switch state {
+        case .none:
+            return PlanningCommands.HostServerSend.noneState(message: message)
+        case .voting:
+            return PlanningCommands.HostServerSend.votingState(message: message)
+        case .votingFinished:
+            return PlanningCommands.HostServerSend.finishedState(message: message)
+        }
+    }
+    
+    private func makeJoinServerSendCommand(state: PlanningSessionState, message: PlanningSessionStateMessage) -> PlanningCommands.JoinServerSend {
+        switch state {
+        case .none:
+            return PlanningCommands.JoinServerSend.noneState(message: message)
+        case .voting:
+            return PlanningCommands.JoinServerSend.votingState(message: message)
+        case .votingFinished:
+            return PlanningCommands.JoinServerSend.finishedState(message: message)
+        }
+    }
+    
     func sendInvalidCommand(error: PlanningInvalidCommandError, type: PlanningSystemType, clientUuid: UUID) {
         guard let client = clients.find(clientUuid) else { return }
         sendInvalidCommand(error: error, type: type, webSocket: client.socket)
@@ -71,41 +165,5 @@ extension PlanningSystem: PlanningSessionDelegate {
     func sendInvalidSessionCommand(error: PlanningInvalidSessionError, clientUuid: UUID) {
         guard let client = clients.find(clientUuid) else { return }
         sendInvalidSessionCommand(error: error, webSocket: client.socket)
-    }
-    
-    func send(command: PlanningCommands.HostServerSend, clientUuid: UUID) {
-        guard
-            let client = clients.find(clientUuid),
-            let data = try? JSONEncoder().encode(command)
-        else {
-            return
-        }
-        client.socket.send([UInt8](data))
-    }
-    
-    func send(command: PlanningCommands.JoinServerSend, clientUuid: UUID) {
-        guard
-            let client = clients.find(clientUuid),
-            let data = try? JSONEncoder().encode(command)
-        else {
-            return
-        }
-        client.socket.send([UInt8](data))
-    }
-    
-    func send(command: PlanningCommands.HostServerSend, sessionId: String) {
-        guard let data = try? JSONEncoder().encode(command) else { return }
-        let socketClients = clients.find(sessionId: sessionId, type: .host)
-        socketClients.forEach { socketClient in
-            socketClient.socket.send([UInt8](data))
-        }
-    }
-    
-    func send(command: PlanningCommands.JoinServerSend, sessionId: String) {
-        guard let data = try? JSONEncoder().encode(command) else { return }
-        let socketClients = clients.find(sessionId: sessionId, type: .join)
-        socketClients.forEach { socketClient in
-            socketClient.socket.send([UInt8](data))
-        }
     }
 }

@@ -18,6 +18,8 @@ extension PlanningSystem {
             vote(message: message, webSocket: webSocket, uuid: uuid)
         case .leaveSession(let uuid):
             leaveSession(webSocket: webSocket, uuid: uuid)
+        case .reconnect(let uuid):
+            reconnect(webSocket: webSocket, uuid: uuid)
         }
     }
     

@@ -21,16 +21,16 @@ public extension PlanningCommands.JoinServerSend {
         switch type {
         case PlanningCommands.JoinKey.noneState.rawValue:
             let model = try container.decode(PlanningSessionStateMessage.self, forKey: .message)
-            self = .noneState(model)
+            self = .noneState(message: model)
         case PlanningCommands.JoinKey.votingState.rawValue:
             let model = try container.decode(PlanningSessionStateMessage.self, forKey: .message)
-            self = .votingState(model)
+            self = .votingState(message: model)
         case PlanningCommands.JoinKey.finishedState.rawValue:
             let model = try container.decode(PlanningSessionStateMessage.self, forKey: .message)
-            self = .finishedState(model)
+            self = .finishedState(message: model)
         case PlanningCommands.JoinKey.invalidCommand.rawValue:
             let model = try container.decode(PlanningInvalidCommandMessage.self, forKey: .message)
-            self = .invalidCommand(model)
+            self = .invalidCommand(message: model)
         case PlanningCommands.JoinKey.invalidSession.rawValue:
             self = .invalidSession
         case PlanningCommands.JoinKey.removeParticipant.rawValue:

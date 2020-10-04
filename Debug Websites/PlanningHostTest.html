@@ -39,7 +39,7 @@
             </tr>
             <tr>
                 <td>
-                    <button id="skipParticipantVote">Skip Vote</button>
+                    <button id="skipVoteCommand">Skip Vote</button>
                 </td>
                 <td>
                     <b>Participant ID: </b><input id="skipParticipantId" />
@@ -57,7 +57,7 @@
             </tr>
             <tr>
                 <td>
-                    <button id="finishVotingCommand">Force finish voting</button>
+                    <button id="finishVotingCommand">Finish voting</button>
                 </td>
             </tr>
             <tr>
@@ -66,6 +66,11 @@
                 </td>
                 <td>
                     <b>Participant ID: </b><input id="participantIdentifier" />
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <button id="reconnectCommand">Reconnect</button>
                 </td>
             </tr>
         </table>
@@ -82,29 +87,34 @@
     const sendButton = document.getElementById("send");
     const messageInput = document.getElementById("message");
 
-    const socket = new WebSocket("ws://localhost:8080/planning/host");
+    var socket = createSocket();
     const uuid = uuidv4()
 
     function uuidv4() {
         return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c => (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
     }
 
-    socket.onopen = function (event) {
-        addMessageToWindow("Connected");
-    };
+    function createSocket() {
+        var socket = new WebSocket("ws://localhost:8080/planning/host");
+        socket.onopen = function (event) {
+            addMessageToWindow("Connected");
+        };
 
-    socket.onmessage = function (event) {
-        let fileReader = new FileReader()
+        socket.onmessage = function (event) {
+            let fileReader = new FileReader()
 
-        fileReader.onload = function (e) {
-            let command = new TextDecoder("utf8").decode(e.target.result);
-            addMessageToWindow(`<p style="background-color:lightcyan">Got Message: ${command}</p>`);
-        }
-        fileReader.readAsArrayBuffer(event.data);
-    };
+            fileReader.onload = function (e) {
+                let command = new TextDecoder("utf8").decode(e.target.result);
+                addMessageToWindow(`<p style="background-color:lightcyan">Got Message: ${command}</p>`);
+            }
+            fileReader.readAsArrayBuffer(event.data);
+        };
 
-    socket.onclose = function (e) {
-        addMessageToWindow("Disconnected");
+        socket.onclose = function (e) {
+            addMessageToWindow("Disconnected");
+        };
+
+        return socket;
     }
 
     sendButton.onclick = function (event) {
@@ -181,10 +191,10 @@
     }
 
     // Skip Vote Command
-    const skipParticipantVoteButton = document.getElementById("skipParticipantVote");
+    const skipVoteCommandButton = document.getElementById("skipVoteCommand");
     const skipParticipantId = document.getElementById("skipParticipantId");
 
-    skipParticipantVoteButton.onclick = function (event) {
+    skipVoteCommandButton.onclick = function (event) {
         let command = JSON.stringify(skipVoteCommand(skipParticipantId.value));
         sendMessage(command);
         skipParticipantId.value = "";
@@ -244,6 +254,20 @@
         return new Command("REMOVE_PARTICIPANT", message)
     }
 
+    // Reconnect
+    const reconnectCommandButton = document.getElementById("reconnectCommand");
+    reconnectCommandButton.onclick = function (event) {
+        socket.close()
+        socket = createSocket();
+
+        setTimeout(function(){
+            let command = JSON.stringify({
+                uuid: uuid,
+                type: "RECONNECT"
+            });
+            sendMessage(command);
+        }, 200);
+    };
 </script>
 
 </html>

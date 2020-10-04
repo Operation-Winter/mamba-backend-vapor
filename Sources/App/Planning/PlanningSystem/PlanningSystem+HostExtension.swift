@@ -26,6 +26,8 @@ extension PlanningSystem {
             finishVoting(webSocket: webSocket, uuid: uuid)
         case .revote(let uuid):
             revote(webSocket: webSocket, uuid: uuid)
+        case .reconnect(let uuid):
+            reconnect(webSocket: webSocket, uuid: uuid)
         }
     }
 
@@ -113,7 +115,7 @@ extension PlanningSystem {
             return
         }
         client.socket = webSocket
-        send(command: PlanningCommands.JoinServerSend.endSession, sessionId: session.id)
+        send(joinCommand: .endSession, sessionId: session.id)
         clients.close(sessionId: session.id, type: .host)
         clients.close(sessionId: session.id, type: .join)
         sessions.remove(session)
@@ -129,7 +131,7 @@ extension PlanningSystem {
             return
         }
         client.socket = webSocket
-        send(command: .removeParticipant, clientUuid: message.participantId)
+        send(joinCommand: .removeParticipant, clientUuid: message.participantId)
         session.remove(participantId: message.participantId)
         clients.close(message.participantId)
         session.sendStateToAll()

@@ -21,16 +21,16 @@ public extension PlanningCommands.HostServerSend {
         switch type {
         case PlanningCommands.HostKey.noneState.rawValue:
             let model = try container.decode(PlanningSessionStateMessage.self, forKey: .message)
-            self = .noneState(model)
+            self = .noneState(message: model)
         case PlanningCommands.HostKey.votingState.rawValue:
             let model = try container.decode(PlanningSessionStateMessage.self, forKey: .message)
-            self = .votingState(model)
+            self = .votingState(message: model)
         case PlanningCommands.HostKey.finishedState.rawValue:
             let model = try container.decode(PlanningSessionStateMessage.self, forKey: .message)
-            self = .finishedState(model)
+            self = .finishedState(message: model)
         case PlanningCommands.HostKey.invalidCommand.rawValue:
             let model = try container.decode(PlanningInvalidCommandMessage.self, forKey: .message)
-            self = .invalidCommand(model)
+            self = .invalidCommand(message: model)
         default:
             throw DecodingError.keyNotFound(CodingKeys.message, DecodingError.Context(codingPath: [], debugDescription: "Invalid key: \(type)"))
         }
