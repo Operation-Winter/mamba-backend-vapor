@@ -19,8 +19,7 @@ extension PlanningSystem {
         case .skipVote(let uuid, let message):
             skipVote(message: message, webSocket: webSocket, uuid: uuid)
         case .removeParticipant(let uuid, let message):
-            // TODO: MAM-104
-            break
+            removeParticipant(message: message, webSocket: webSocket, uuid: uuid)
         case .endSession(let uuid):
             endSession(webSocket: webSocket, uuid: uuid)
         case .finishVoting(let uuid):
@@ -118,7 +117,22 @@ extension PlanningSystem {
         send(command: PlanningCommands.JoinServerSend.endSession, sessionId: session.id)
         clients.close(sessionId: session.id, type: .host)
         clients.close(sessionId: session.id, type: .join)
-        
         sessions.remove(session)
+    }
+    
+    // MARK: Remove participant command
+    func removeParticipant(message: PlanningRemoveParticipantMessage, webSocket: WebSocket, uuid: UUID) {
+        guard
+            let client = clients.find(uuid),
+            let session = sessions.find(id: client.sessionId)
+        else {
+            sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
+            return
+        }
+        client.socket = webSocket
+        send(command: .removeParticipant, clientUuid: message.participantId)
+        session.remove(participantId: message.participantId)
+        clients.close(message.participantId)
+        session.sendStateToAll()
     }
 }

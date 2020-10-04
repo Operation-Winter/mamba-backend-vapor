@@ -75,6 +75,11 @@ class PlanningSession {
         }
     }
     
+    func remove(participantId: UUID) {
+        ticket?.removeVotes(participantId: participantId)
+        participants.removeAll { $0.participantId == participantId }
+    }
+    
     func resetVotes() {
         ticket?.removeVotesAll()
         state = .voting

@@ -18,4 +18,10 @@ class PlanningWebSocketClients: WebSocketClients<PlanningWebSocketClient> {
             remove($0)
         }
     }
+    
+    func close(_ uuid: UUID) {
+        guard let client = find(uuid) else { return }
+        _ = client.socket.close(code: .normalClosure)
+        remove(client)
+    }
 }

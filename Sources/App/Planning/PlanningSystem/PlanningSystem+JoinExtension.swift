@@ -50,4 +50,5 @@ extension PlanningSystem {
         session.add(vote: message.selectedCard, uuid: uuid)
         session.sendStateToAll()
     }
+
 }

@@ -9,5 +9,5 @@
 import Foundation
 
 public struct PlanningRemoveParticipantMessage: Codable {
-    public let participantId: String
+    public let participantId: UUID
 }
