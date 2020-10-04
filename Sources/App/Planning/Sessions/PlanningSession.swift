@@ -84,4 +84,13 @@ class PlanningSession {
         ticket?.removeVotesAll()
         state = .voting
     }
+    
+    func finishVotes() {
+        participants.forEach { participant in
+            if ticket?.ticketVotes.contains(where: { $0.participantId == participant.participantId }) == false {
+                add(vote: nil, uuid: participant.participantId)
+            }
+        }
+        state = .votingFinished
+    }
 }

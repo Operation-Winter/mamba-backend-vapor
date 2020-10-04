@@ -23,8 +23,7 @@ extension PlanningSystem {
         case .endSession(let uuid):
             endSession(webSocket: webSocket, uuid: uuid)
         case .finishVoting(let uuid):
-            // TODO: MAM-105
-            break
+            finishVoting(webSocket: webSocket, uuid: uuid)
         case .revote(let uuid):
             revote(webSocket: webSocket, uuid: uuid)
         }
@@ -133,6 +132,20 @@ extension PlanningSystem {
         send(command: .removeParticipant, clientUuid: message.participantId)
         session.remove(participantId: message.participantId)
         clients.close(message.participantId)
+        session.sendStateToAll()
+    }
+    
+    // MARK: Finish voting command
+    func finishVoting(webSocket: WebSocket, uuid: UUID) {
+        guard
+            let client = clients.find(uuid),
+            let session = sessions.find(id: client.sessionId)
+        else {
+            sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
+            return
+        }
+        client.socket = webSocket
+        session.finishVotes()
         session.sendStateToAll()
     }
 }
