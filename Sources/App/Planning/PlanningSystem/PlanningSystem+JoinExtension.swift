@@ -7,6 +7,7 @@
 
 import Foundation
 import Vapor
+import MambaNetworking
 
 // MARK: - Join related command methods
 extension PlanningSystem {

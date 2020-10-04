@@ -7,6 +7,7 @@
 
 import Foundation
 import Vapor
+import MambaNetworking
 
 // MARK: - Host related command methods
 extension PlanningSystem {

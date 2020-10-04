@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import MambaNetworking
 
 class PlanningSession {
     private(set) var id: String
