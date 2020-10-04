@@ -108,6 +108,4 @@ extension PlanningSystem: PlanningSessionDelegate {
             socketClient.socket.send([UInt8](data))
         }
     }
-    
-    
 }

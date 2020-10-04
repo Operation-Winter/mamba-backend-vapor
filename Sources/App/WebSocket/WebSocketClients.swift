@@ -38,6 +38,6 @@ class WebSocketClients<T: WebSocketClient> {
     
     deinit {
         let futures = storage.values.map { $0.socket.close() }
-        try? self.eventLoop.flatten(futures).wait()
+        try? eventLoop.flatten(futures).wait()
     }
 }
