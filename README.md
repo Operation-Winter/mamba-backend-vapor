@@ -170,6 +170,8 @@ Type                    | Description                                           
 
 ## Roadmap
 
+White lines indicate completed features.
+
 [![Roadmap][roadmap]](docs/Roadmap.png)
 
 ## License
