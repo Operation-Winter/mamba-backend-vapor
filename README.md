@@ -168,17 +168,6 @@ A command is sent in the following structure:
   </tr>
   <tr>
     <td>
-      <pre>END_SESSION</pre>
-    </td>
-    <td>
-      Closes session and removes all participants
-    </td>
-    <td>
-      None
-    </td>
-  </tr>
-  <tr>
-    <td>
       <pre>REMOVE_PARTICIPANT</pre>
     </td>
     <td>
@@ -189,6 +178,17 @@ A command is sent in the following structure:
 { 
   "participantId": ""
 }</pre>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <pre>END_SESSION</pre>
+    </td>
+    <td>
+      Closes session and removes all participants
+    </td>
+    <td>
+      None
     </td>
   </tr>
   <tr>
@@ -328,6 +328,10 @@ A command is sent in the following structure:
       {
         "participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9",
         "selectedCard":"FIVE"
+      },
+      {
+        "participantId":"34ED510B-B21D-423E-83D0-B85747F4D515",
+        "selectedCard":null //Indicates that this vote is skipped
       }
     ],
     "description":"Test"
@@ -361,24 +365,238 @@ A command is sent in the following structure:
 
 ##### Client to server
 
-Type                    | Description                                   | Message
--------------           | ------------                                  | ------------
-`JOIN_SESSION`          | Send session name and available cards         | ```{"participantName":"Armand","sessionCode":"545544"}```
-`VOTE`                  | Send vote value for a ticket                  | ```{"selectedCard":"ONE"}```
-`LEAVE_SESSION`         | Inform server client is disconnecting         | None
-`RECONNECT`             | Reconnect to existing session using a UUID    | None
+<table>
+  <tr>
+    <th>
+        Type
+    </th>
+    <th>
+        Description
+    </th>
+    <th>
+        Message
+    </th>
+  </tr>
+  <tr>
+    <td>
+      <pre>JOIN_SESSION</pre>
+    </td>
+    <td>
+      Send session name and available cards
+    </td>
+    <td>
+      <pre lang="json">
+{
+  "participantName":"Armand",
+  "sessionCode":"545544"
+}</pre>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <pre>VOTE</pre>
+    </td>
+    <td>
+      Send vote value for a ticket
+    </td>
+    <td>
+      <pre lang="json">
+{
+  "selectedCard":"ONE"
+}</pre>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <pre>LEAVE_SESSION</pre>
+    </td>
+    <td>
+      Inform server client is disconnecting
+    </td>
+    <td>
+      None
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <pre>RECONNECT</pre>
+    </td>
+    <td>
+      Reconnect to existing session using a UUID
+    </td>
+    <td>
+      None
+    </td>
+  </tr>
+</table>
 
 ##### Server to client
 
-Type                    | Description                                                               | Message
--------------           | ------------                                                              | -----------
-`NONE_STATE`            | State `NONE` command containing current state of session                  | ```{"participants":[{"name":"Armand","participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9"}],"availableCards":["ZERO","ONE","TWO","THREE","FIVE","EIGHT","THIRTEEN","TWENTY","FOURTY","HUNDRED","QUESTION","COFFEE"],"sessionCode":"000000","sessionName":"Test"}```
-`VOTING_STATE`          | State `VOTING` command containing current state of session                | ```{"participants":[{"name":"Armand","participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9"},{"name":"Piet","participantId":"34ED510B-B21D-423E-83D0-B85747F4D515"}],"ticket":{"title":"Test","ticketVotes":[{"participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9","selectedCard":"FIVE"}],"description":"Test"},"availableCards":["ZERO","ONE","TWO","THREE","FIVE","EIGHT","THIRTEEN","TWENTY","FOURTY","HUNDRED","QUESTION","COFFEE"],"sessionCode":"000000","sessionName":"Test"}```
-`FINISHED_STATE`        | State `VOTING_FINISHED` command containing current state of session       | ```{"participants":[{"name":"Armand","participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9"},{"name":"Piet","participantId":"34ED510B-B21D-423E-83D0-B85747F4D515"}],"ticket":{"title":"Test","ticketVotes":[{"participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9","selectedCard":"FIVE"}],"description":"Test"},"availableCards":["ZERO","ONE","TWO","THREE","FIVE","EIGHT","THIRTEEN","TWENTY","FOURTY","HUNDRED","QUESTION","COFFEE"],"sessionCode":"000000","sessionName":"Test"}```
-`INVALID_COMMAND`       | Inform client that command sent is invalid                                | ```{"code":"0000","description":"No session code has been specified"}```
-`INVALID_SESSION`       | Inform client that session is invalid                                     | None
-`REMOVE_PARTICIPANT`    | Inform client that it has been removed                                    | None
-`END_SESSION`           | Inform client that session had been ended                                 | None
+<table>
+  <tr>
+    <th>
+        Type
+    </th>
+    <th>
+        Description
+    </th>
+    <th>
+        Message
+    </th>
+  </tr>
+  <tr>
+    <td>
+      <pre>NONE_STATE</pre>
+    </td>
+    <td>
+      State `NONE` command containing current state of session
+    </td>
+    <td>
+      <pre lang="json">
+{
+  "participants":[
+    {
+      "name":"Armand",
+      "participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9"
+    }
+  ],
+  "availableCards":[
+    "ZERO", "ONE", "TWO", "THREE", "FIVE", "EIGHT", "THIRTEEN", "TWENTY", "FOURTY", "HUNDRED", "QUESTION", "COFFEE"
+  ],
+  "sessionCode":"000000",
+  "sessionName":"Test"
+}</pre>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <pre>VOTING_STATE</pre>
+    </td>
+    <td>
+      State `VOTING` command containing current state of session
+    </td>
+    <td>
+      <pre lang="json">
+{
+  "participants":[
+    {
+      "name":"Armand",
+      "participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9"
+    },
+    {
+      "name":"Piet",
+      "participantId":"34ED510B-B21D-423E-83D0-B85747F4D515"
+    }
+  ],
+  "ticket":{
+    "title":"Test",
+    "ticketVotes":[
+      {
+        "participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9",
+        "selectedCard":"FIVE"
+      }
+    ],
+    "description":"Test"
+  },
+  "availableCards":[
+    "ZERO", "ONE", "TWO", "THREE", "FIVE", "EIGHT", "THIRTEEN", "TWENTY", "FOURTY", "HUNDRED", "QUESTION", "COFFEE"
+  ],
+  "sessionCode":"000000",
+  "sessionName":"Test"
+}</pre>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <pre>FINISHED_STATE</pre>
+    </td>
+    <td>
+      State `VOTING_FINISHED` command containing current state of session
+    </td>
+    <td>
+      <pre lang="json">
+{
+  "participants":[
+    {
+      "name":"Armand",
+      "participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9"
+    },
+    {
+      "name":"Piet",
+      "participantId":"34ED510B-B21D-423E-83D0-B85747F4D515"
+    }
+  ],
+  "ticket":{
+    "title":"Test",
+    "ticketVotes":[
+      {
+        "participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9",
+        "selectedCard":"FIVE"
+      },
+      {
+        "participantId":"34ED510B-B21D-423E-83D0-B85747F4D515",
+        "selectedCard":null //Indicates that this vote is skipped
+      }
+    ],
+    "description":"Test"
+  },
+  "availableCards":[
+    "ZERO", "ONE", "TWO", "THREE", "FIVE", "EIGHT", "THIRTEEN", "TWENTY", "FOURTY", "HUNDRED", "QUESTION", "COFFEE"
+  ],
+  "sessionCode":"000000",
+  "sessionName":"Test"
+}</pre>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <pre>INVALID_COMMAND</pre>
+    </td>
+    <td>
+      Inform client that command sent is invalid
+    </td>
+    <td>
+      <pre lang="json">
+{
+  "code":"0000",
+  "description":"No session code has been specified"
+}</pre>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <pre>INVALID_SESSION</pre>
+    </td>
+    <td>
+      Inform client that session is invalid
+    </td>
+    <td>
+      None
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <pre>REMOVE_PARTICIPANT</pre>
+    </td>
+    <td>
+      Inform client that they have been removed from the session
+    </td>
+    <td>
+      None
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <pre>END_SESSION</pre>
+    </td>
+    <td>
+      Inform client that session had been ended
+    </td>
+    <td>
+      None
+    </td>
+  </tr>
+</table>
 
 ### Error codes
 
