@@ -1,0 +1,22 @@
+name: Deploy tag to Server
+on: 
+  push:
+    tags:
+      - v*
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Add SSH key
+        uses: kielabokkie/ssh-key-and-known-hosts-action@v1
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SERVER_KEY }}
+          ssh-host: mamba.armandkamffer.co.za
+      - name: Docker compose and Deploy to Server
+        env:
+          DEPLOY_SERVER_ADDRESS: ${{ secrets.DEPLOY_SERVER_ADDRESS }}
+        run: |
+          docker-compose -H "${DEPLOY_SERVER_ADDRESS}" up -d --build
