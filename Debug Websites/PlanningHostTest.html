@@ -95,7 +95,7 @@
     }
 
     function createSocket() {
-        var socket = new WebSocket("ws://localhost:8080/planning/host");
+        var socket = new WebSocket("ws://mamba.armandkamffer.co.za:8080/planning/host");
         socket.onopen = function (event) {
             addMessageToWindow("Connected");
         };
