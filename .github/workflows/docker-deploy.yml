@@ -18,7 +18,7 @@ jobs:
             swift package resolve
       - name: Swift build
         run:
-            swift build --enable-test-discovery -c release
+            swift build --build-path build --enable-test-discovery -c release
       - name: Add SSH key
         uses: kielabokkie/ssh-key-and-known-hosts-action@v1
         with:
@@ -28,4 +28,4 @@ jobs:
         env:
           DEPLOY_SERVER_ADDRESS: ${{ secrets.DEPLOY_SERVER_ADDRESS }}
         run: |
-          docker-compose -f Docker-compose-deploy.yml -H "${DEPLOY_SERVER_ADDRESS}" up -d --build
+          docker-compose -f docker-compose-deploy.yml -H "${DEPLOY_SERVER_ADDRESS}" up -d --build
