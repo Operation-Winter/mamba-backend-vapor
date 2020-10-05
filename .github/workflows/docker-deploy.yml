@@ -13,9 +13,6 @@ jobs:
           swift-version: '5.3'
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: Swift package resolve
-        run:
-            swift package resolve
       - name: Swift build
         run:
             swift build --build-path build --enable-test-discovery -c release
