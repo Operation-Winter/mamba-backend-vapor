@@ -18,6 +18,7 @@
   * [Installation](#installation)
 * [Usage](#usage)
   * [Swift Package Manager](#swift-package-manager)
+  * [Docker](#docker)
   * [Commands](#commands)
   * [Error codes](#error-codes)
 * [Roadmap](#roadmap)
@@ -76,6 +77,13 @@ swift test
 Update or resolve package dependencies:
 ```sh
 swift package update
+```
+
+### Docker
+
+To run the container:
+```sh
+docker-compose up
 ```
 
 ### Commands
