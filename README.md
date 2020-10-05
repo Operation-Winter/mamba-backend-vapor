@@ -5,7 +5,7 @@
 
 <br />
 <p align="center">
-  <img src="docs/Mamba.png" alt="Logo" width="120" height="120">
+  <img src="Docs/Mamba.png" alt="Logo" width="120" height="120">
 </p>
 
 ## Table of Contents
