@@ -108,25 +108,254 @@ A command is sent in the following structure:
 
 ##### Client to server
 
-Type                    | Description                                               | Message
--------------           | ------------                                              | -----------
-`START_SESSION`         | Send session name and available cards                     | ```{ "sessionName": "Example session", "availableCards": ["ZERO", "ONE", "TWO", "THREE", "FIVE", "EIGHT", "THIRTEEN", "TWENTY", "FOURTY", "HUNDRED", "QUESTION", "COFFEE"] }```
-`ADD_TICKET`            | Add a new ticket. Changes state to `VOTING`               | ```{ "title": "DM-10000", "description": "Blah blah" }```
-`SKIP_VOTE`             | Skip vote for a participant                               | ```{ "participantId": "" }```
-`END_SESSION`           | Closes session and removes all participants               | None
-`REMOVE_PARTICIPANT`    | Request to remove a participant from the session          | ```{ "participantId": "" }```
-`FINISH_VOTING`         | Force state from `VOTING` to `VOTING_FINISHED`            | None
-`REVOTE`                | When in `VOTING_FINISHED` state revote the current ticket | None
-`RECONNECT`             | Reconnect to existing session using a UUID                | None
+<table>
+  <tr>
+    <th>
+        Type
+    </th>
+    <th>
+        Description
+    </th>
+    <th>
+        Message
+    </th>
+  </tr>
+  <tr>
+    <td>
+      <pre>START_SESSION</pre>
+    </td>
+    <td>
+      Send session name and available cards.
+    </td>
+    <td>
+      <pre lang="json">
+{ 
+  "sessionName": "Example session", 
+  "availableCards": [
+    "ZERO", "ONE", "TWO", "THREE", "FIVE", "EIGHT", "THIRTEEN", "TWENTY", "FOURTY", "HUNDRED", "QUESTION", "COFFEE"
+  ] 
+}</pre>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <pre>ADD_TICKET</pre>
+    </td>
+    <td>
+      Add a new ticket. Changes state to `VOTING`
+    </td>
+    <td>
+      <pre lang="json">
+{ 
+  "title": "DM-10000", 
+  "description": "Blah blah"
+}</pre>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <pre>SKIP_VOTE</pre>
+    </td>
+    <td>
+      Skip vote for a participant
+    </td>
+    <td>
+      <pre lang="json">
+{ 
+  "participantId": ""
+}</pre>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <pre>END_SESSION</pre>
+    </td>
+    <td>
+      Closes session and removes all participants
+    </td>
+    <td>
+      None
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <pre>REMOVE_PARTICIPANT</pre>
+    </td>
+    <td>
+      Request to remove a participant from the session
+    </td>
+    <td>
+      <pre lang="json">
+{ 
+  "participantId": ""
+}</pre>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <pre>FINISH_VOTING</pre>
+    </td>
+    <td>
+      Force state from `VOTING` to `VOTING_FINISHED`
+    </td>
+    <td>
+      None
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <pre>REVOTE</pre>
+    </td>
+    <td>
+      When in `VOTING_FINISHED` state revote the current ticket
+    </td>
+    <td>
+      None
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <pre>RECONNECT</pre>
+    </td>
+    <td>
+      Reconnect to existing session using a UUID
+    </td>
+    <td>
+      None
+    </td>
+  </tr>
+</table>
 
 ##### Server to client
 
-Type                    | Description                                                           | Message
--------------           | ------------                                                          | -----------
-`NONE_STATE`            | State `NONE` command containing current state of session              | ```{"participants":[{"name":"Armand","participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9"}],"availableCards":["ZERO","ONE","TWO","THREE","FIVE","EIGHT","THIRTEEN","TWENTY","FOURTY","HUNDRED","QUESTION","COFFEE"],"sessionCode":"000000","sessionName":"Test"}```
-`VOTING_STATE`          | State `VOTING` command containing current state of session            | ```{"participants":[{"name":"Armand","participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9"},{"name":"Piet","participantId":"34ED510B-B21D-423E-83D0-B85747F4D515"}],"ticket":{"title":"Test","ticketVotes":[{"participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9","selectedCard":"FIVE"}],"description":"Test"},"availableCards":["ZERO","ONE","TWO","THREE","FIVE","EIGHT","THIRTEEN","TWENTY","FOURTY","HUNDRED","QUESTION","COFFEE"],"sessionCode":"000000","sessionName":"Test"}```
-`FINISHED_STATE`        | State `VOTING_FINISHED` command containing current state of session   | ```{"participants":[{"name":"Armand","participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9"},{"name":"Piet","participantId":"34ED510B-B21D-423E-83D0-B85747F4D515"}],"ticket":{"title":"Test","ticketVotes":[{"participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9","selectedCard":"FIVE"}],"description":"Test"},"availableCards":["ZERO","ONE","TWO","THREE","FIVE","EIGHT","THIRTEEN","TWENTY","FOURTY","HUNDRED","QUESTION","COFFEE"],"sessionCode":"000000","sessionName":"Test"}```
-`INVALID_COMMAND`       | Inform client that command sent is invalid                            | ```{"code":"0000","description":"No session code has been specified"}```
+<table>
+  <tr>
+    <th>
+        Type
+    </th>
+    <th>
+        Description
+    </th>
+    <th>
+        Message
+    </th>
+  </tr>
+  <tr>
+    <td>
+      <pre>NONE_STATE</pre>
+    </td>
+    <td>
+      State `NONE` command containing current state of session
+    </td>
+    <td>
+      <pre lang="json">
+{
+  "participants":[
+    {
+      "name":"Armand",
+      "participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9"
+    }
+  ],
+  "availableCards":[
+    "ZERO", "ONE", "TWO", "THREE", "FIVE", "EIGHT", "THIRTEEN", "TWENTY", "FOURTY", "HUNDRED", "QUESTION", "COFFEE"
+  ],
+  "sessionCode":"000000",
+  "sessionName":"Test"
+}</pre>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <pre>VOTING_STATE</pre>
+    </td>
+    <td>
+      State `VOTING` command containing current state of session
+    </td>
+    <td>
+      <pre lang="json">
+{
+  "participants":[
+    {
+      "name":"Armand",
+      "participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9"
+    },
+    {
+      "name":"Piet",
+      "participantId":"34ED510B-B21D-423E-83D0-B85747F4D515"
+    }
+  ],
+  "ticket":{
+    "title":"Test",
+    "ticketVotes":[
+      {
+        "participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9",
+        "selectedCard":"FIVE"
+      }
+    ],
+    "description":"Test"
+  },
+  "availableCards":[
+    "ZERO", "ONE", "TWO", "THREE", "FIVE", "EIGHT", "THIRTEEN", "TWENTY", "FOURTY", "HUNDRED", "QUESTION", "COFFEE"
+  ],
+  "sessionCode":"000000",
+  "sessionName":"Test"
+}</pre>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <pre>FINISHED_STATE</pre>
+    </td>
+    <td>
+      State `VOTING_FINISHED` command containing current state of session
+    </td>
+    <td>
+      <pre lang="json">
+{
+  "participants":[
+    {
+      "name":"Armand",
+      "participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9"
+    },
+    {
+      "name":"Piet",
+      "participantId":"34ED510B-B21D-423E-83D0-B85747F4D515"
+    }
+  ],
+  "ticket":{
+    "title":"Test",
+    "ticketVotes":[
+      {
+        "participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9",
+        "selectedCard":"FIVE"
+      }
+    ],
+    "description":"Test"
+  },
+  "availableCards":[
+    "ZERO", "ONE", "TWO", "THREE", "FIVE", "EIGHT", "THIRTEEN", "TWENTY", "FOURTY", "HUNDRED", "QUESTION", "COFFEE"
+  ],
+  "sessionCode":"000000",
+  "sessionName":"Test"
+}</pre>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <pre>INVALID_COMMAND</pre>
+    </td>
+    <td>
+      Inform client that command sent is invalid
+    </td>
+    <td>
+      <pre lang="json">
+{
+  "code":"0000",
+  "description":"No session code has been specified"
+}</pre>
+    </td>
+  </tr>
+</table>
 
 #### Planning Join
 
