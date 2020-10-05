@@ -123,9 +123,9 @@ Type                    | Description                                           
 
 Type                    | Description                                                           | Message
 -------------           | ------------                                                          | -----------
-`NONE_STATE`            | State `NONE` command containing current state of session              |
-`VOTING_STATE`          | State `VOTING` command containing current state of session            |
-`FINISHED_STATE`        | State `VOTING_FINISHED` command containing current state of session   |
+`NONE_STATE`            | State `NONE` command containing current state of session              | ```{"participants":[{"name":"Armand","participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9"}],"availableCards":["ZERO","ONE","TWO","THREE","FIVE","EIGHT","THIRTEEN","TWENTY","FOURTY","HUNDRED","QUESTION","COFFEE"],"sessionCode":"000000","sessionName":"Test"}```
+`VOTING_STATE`          | State `VOTING` command containing current state of session            | ```{"participants":[{"name":"Armand","participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9"},{"name":"Piet","participantId":"34ED510B-B21D-423E-83D0-B85747F4D515"}],"ticket":{"title":"Test","ticketVotes":[{"participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9","selectedCard":"FIVE"}],"description":"Test"},"availableCards":["ZERO","ONE","TWO","THREE","FIVE","EIGHT","THIRTEEN","TWENTY","FOURTY","HUNDRED","QUESTION","COFFEE"],"sessionCode":"000000","sessionName":"Test"}```
+`FINISHED_STATE`        | State `VOTING_FINISHED` command containing current state of session   | ```{"participants":[{"name":"Armand","participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9"},{"name":"Piet","participantId":"34ED510B-B21D-423E-83D0-B85747F4D515"}],"ticket":{"title":"Test","ticketVotes":[{"participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9","selectedCard":"FIVE"}],"description":"Test"},"availableCards":["ZERO","ONE","TWO","THREE","FIVE","EIGHT","THIRTEEN","TWENTY","FOURTY","HUNDRED","QUESTION","COFFEE"],"sessionCode":"000000","sessionName":"Test"}```
 `INVALID_COMMAND`       | Inform client that command sent is invalid                            | ```{"code":"0000","description":"No session code has been specified"}```
 
 #### Planning Join
@@ -143,9 +143,9 @@ Type                    | Description                                   | Messag
 
 Type                    | Description                                                               | Message
 -------------           | ------------                                                              | -----------
-`NONE_STATE`            | State `NONE` command containing current state of session                  |
-`VOTING_STATE`          | State `VOTING` command containing current state of session                |
-`FINISHED_STATE`        | State `VOTING_FINISHED` command containing current state of session       |
+`NONE_STATE`            | State `NONE` command containing current state of session                  | ```{"participants":[{"name":"Armand","participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9"}],"availableCards":["ZERO","ONE","TWO","THREE","FIVE","EIGHT","THIRTEEN","TWENTY","FOURTY","HUNDRED","QUESTION","COFFEE"],"sessionCode":"000000","sessionName":"Test"}```
+`VOTING_STATE`          | State `VOTING` command containing current state of session                | ```{"participants":[{"name":"Armand","participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9"},{"name":"Piet","participantId":"34ED510B-B21D-423E-83D0-B85747F4D515"}],"ticket":{"title":"Test","ticketVotes":[{"participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9","selectedCard":"FIVE"}],"description":"Test"},"availableCards":["ZERO","ONE","TWO","THREE","FIVE","EIGHT","THIRTEEN","TWENTY","FOURTY","HUNDRED","QUESTION","COFFEE"],"sessionCode":"000000","sessionName":"Test"}```
+`FINISHED_STATE`        | State `VOTING_FINISHED` command containing current state of session       | ```{"participants":[{"name":"Armand","participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9"},{"name":"Piet","participantId":"34ED510B-B21D-423E-83D0-B85747F4D515"}],"ticket":{"title":"Test","ticketVotes":[{"participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9","selectedCard":"FIVE"}],"description":"Test"},"availableCards":["ZERO","ONE","TWO","THREE","FIVE","EIGHT","THIRTEEN","TWENTY","FOURTY","HUNDRED","QUESTION","COFFEE"],"sessionCode":"000000","sessionName":"Test"}```
 `INVALID_COMMAND`       | Inform client that command sent is invalid                                | ```{"code":"0000","description":"No session code has been specified"}```
 `INVALID_SESSION`       | Inform client that session is invalid                                     | None
 `REMOVE_PARTICIPANT`    | Inform client that it has been removed                                    | None
