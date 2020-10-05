@@ -172,7 +172,7 @@ Type                    | Description                                           
 
 White lines indicate completed features.
 
-[![Roadmap][roadmap]](docs/Roadmap.png)
+[![Roadmap][roadmap]](Docs/Roadmap.png)
 
 ## License
 
