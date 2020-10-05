@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: fwal/setup-swift@v1
         with:
-          swift-version: "5.3.0"
+          swift-version: "5.3"
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Swift package resolve
@@ -28,4 +28,4 @@ jobs:
         env:
           DEPLOY_SERVER_ADDRESS: ${{ secrets.DEPLOY_SERVER_ADDRESS }}
         run: |
-          docker-compose -f docker-compose-deploy.yml -H "${DEPLOY_SERVER_ADDRESS}" up -d --build
+          docker-compose -f Docker-compose-deploy.yml -H "${DEPLOY_SERVER_ADDRESS}" up -d --build
