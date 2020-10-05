@@ -6,16 +6,10 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
-      - uses: YOCKOW/Action-setup-swift@v1
-        with:
-          swift-version: '5.3'
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: Swift build
-        run:
-          swift build --build-path build --enable-test-discovery --static-swift-stdlib -c release
       - name: Add SSH key
         uses: kielabokkie/ssh-key-and-known-hosts-action@v1
         with:
@@ -25,4 +19,4 @@ jobs:
         env:
           DEPLOY_SERVER_ADDRESS: ${{ secrets.DEPLOY_SERVER_ADDRESS }}
         run: |
-          docker-compose -f docker-compose-deploy.yml -H "${DEPLOY_SERVER_ADDRESS}" up -d --build
+          docker-compose -H "${DEPLOY_SERVER_ADDRESS}" up -d --build
