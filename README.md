@@ -607,9 +607,6 @@ A command is sent in the following structure:
 #### Invalid Command
 
 - `0000`: No session code has been specified.
-- `1000`: Session is not available anymore.
-
-- `0000`: No session code has been specified.
 - `0002`: The command doesn't exist.
 - `0003`: The server has run out of capacity, could not create a new planning session.
 - `0004`: Invalid identifier.
