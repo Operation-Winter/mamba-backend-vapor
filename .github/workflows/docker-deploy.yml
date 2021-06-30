@@ -14,7 +14,7 @@ jobs:
         uses: kielabokkie/ssh-key-and-known-hosts-action@v1
         with:
           ssh-private-key: ${{ secrets.DEPLOY_SERVER_KEY }}
-          ssh-host: mamba.armandkamffer.co.za
+          ssh-host: ${{ secrets.DEPLOY_SERVER_ADDRESS_WITHOUT_SSH }}
       - name: Docker compose and Deploy to Server
         env:
           DEPLOY_SERVER_ADDRESS: ${{ secrets.DEPLOY_SERVER_ADDRESS }}
