@@ -8,7 +8,7 @@
 import Foundation
 import MambaNetworking
 
-protocol PlanningSessionDelegate: class {
+protocol PlanningSessionDelegate: AnyObject {
     func send<T: Encodable>(command: T, clientUuid: UUID)
     func send(hostCommand command: PlanningCommands.HostServerSend, clientUuid: UUID)
     func send(joinCommand command: PlanningCommands.JoinServerSend, clientUuid: UUID)
