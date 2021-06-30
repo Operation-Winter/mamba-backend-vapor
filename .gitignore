@@ -23,6 +23,7 @@ xcuserdata/
 
 ## compatibility with Xcode 3 and earlier (ignoring not required starting Xcode 4)
 build/
+!docker/build
 *.moved-aside
 *.pbxuser
 !default.pbxuser
