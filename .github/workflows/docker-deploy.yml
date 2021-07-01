@@ -19,4 +19,4 @@ jobs:
         env:
           DEPLOY_SERVER_ADDRESS: ${{ secrets.DEPLOY_SERVER_ADDRESS }}
         run: |
-          docker-compose -H "${DEPLOY_SERVER_ADDRESS}" up -d --build --force-recreate
+          docker-compose -H "${DEPLOY_SERVER_ADDRESS}" up -d --build --force-recreate --no-cache 
