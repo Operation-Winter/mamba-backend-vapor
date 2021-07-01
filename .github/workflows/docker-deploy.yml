@@ -21,5 +21,6 @@ jobs:
         run: |
           docker-compose build --no-cache
           docker-compose -H "${DEPLOY_SERVER_ADDRESS}" down
+          docker save mamba-backend-vapor_api_1
           docker -H "${DEPLOY_SERVER_ADDRESS}" image load
           docker-compose -H "${DEPLOY_SERVER_ADDRESS}" up -d --force-recreate
