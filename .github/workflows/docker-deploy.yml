@@ -15,11 +15,15 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.DEPLOY_SERVER_KEY }}
           ssh-host: ${{ secrets.DEPLOY_SERVER_ADDRESS_WITHOUT_SSH }}
-      - name: Docker compose and Deploy to Server
+      - name: Docker compose build
+        run: |
+          docker-compose build --no-cache
+      - name: Docker deploy image
+        run: |
+          docker save mamba-backend-vapor_api:latest | DOCKER_HOST=${{ secrets.DOCKER_HOST_URL }} docker image load --quiet
+      - name: Docker compose container
         env:
           DEPLOY_SERVER_ADDRESS: ${{ secrets.DEPLOY_SERVER_ADDRESS }}
         run: |
-          docker-compose build --no-cache
-          docker save mamba-backend-vapor_api:latest | DOCKER_HOST=${{ secrets.DOCKER_HOST_URL }} docker image load --quiet
           docker-compose -H "${DEPLOY_SERVER_ADDRESS}" down
           docker-compose -H "${DEPLOY_SERVER_ADDRESS}" up -d --force-recreate
