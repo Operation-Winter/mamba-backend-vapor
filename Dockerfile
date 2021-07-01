@@ -50,7 +50,7 @@ RUN useradd --user-group --create-home --system --skel /dev/null --home-dir /app
 # Switch to the new home directory
 WORKDIR /app
 
-# Copy built executable and any staged resources from builder
+# Copy build executable and any staged resources from builder
 COPY --from=build --chown=vapor:vapor /staging /app
 
 # Ensure all further commands run as the vapor user
