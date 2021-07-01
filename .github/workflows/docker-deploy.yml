@@ -20,7 +20,7 @@ jobs:
           docker-compose build --no-cache
       - name: Docker deploy image
         run: |
-          docker save mamba-backend-vapor_api:latest | DOCKER_HOST=${{ secrets.DOCKER_HOST_URL }} docker image load --quiet
+          docker save mamba-backend-vapor_api:latest | docker -H ${{ secrets.DEPLOY_SERVER_ADDRESS }} image load --quiet
       - name: Docker compose container
         env:
           DEPLOY_SERVER_ADDRESS: ${{ secrets.DEPLOY_SERVER_ADDRESS }}
