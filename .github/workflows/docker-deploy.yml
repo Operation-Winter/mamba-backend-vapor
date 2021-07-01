@@ -20,8 +20,6 @@ jobs:
           DEPLOY_SERVER_ADDRESS: ${{ secrets.DEPLOY_SERVER_ADDRESS }}
         run: |
           docker-compose build --no-cache
-          docker save mamba-backend-vapor_api:latest
+          docker save mamba-backend-vapor_api:latest | DOCKER_HOST=${{ secrets.DOCKER_HOST_URL }} docker image load --quiet
           docker-compose -H "${DEPLOY_SERVER_ADDRESS}" down
-          docker -H "${DEPLOY_SERVER_ADDRESS}" image load --quiet
-          DOCKER_HOST=${{ secrets.DOCKER_HOST_URL }} docker image load
           docker-compose -H "${DEPLOY_SERVER_ADDRESS}" up -d --force-recreate
