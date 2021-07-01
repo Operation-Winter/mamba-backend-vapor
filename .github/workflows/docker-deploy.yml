@@ -1,8 +1,8 @@
 name: Deploy tag to Server
 on: 
   push:
-    tags:
-      - v*
+    branches:
+      - master
 
 jobs:
   build:
@@ -21,4 +21,5 @@ jobs:
         run: |
           docker-compose build --no-cache
           docker-compose -H "${DEPLOY_SERVER_ADDRESS}" down
+          docker-compose -H "${DEPLOY_SERVER_ADDRESS}" pull
           docker-compose -H "${DEPLOY_SERVER_ADDRESS}" up -d --force-recreate
