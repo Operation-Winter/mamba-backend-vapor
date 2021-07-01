@@ -6,9 +6,9 @@ services:
         build: .
         networks:
             static-network:
-                ipv4_address: 172.19.0.2
+                ipv4_address: 172.18.0.2
 networks:
   static-network:
     ipam:
       config:
-        - subnet: 172.19.0.0/16
+        - subnet: 172.18.0.0/16
