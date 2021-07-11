@@ -68,7 +68,7 @@
     }
                                                                     
     function createSocket() {
-        var socket = new WebSocket("ws://localhost:8080/planning/join");
+        var socket = new WebSocket("ws://localhost:8080/api/planning/join");
         socket.onopen = function (event) {
             addMessageToWindow("Connected");
         };
