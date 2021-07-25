@@ -16,6 +16,7 @@ class PlanningSession {
     private(set) var ticket: PlanningTicket?
     private(set) var state: PlanningSessionState
     private(set) weak var delegate: PlanningSessionDelegate?
+    private var timer: DispatchSourceTimer?
     
     private var stateMessage: PlanningSessionStateMessage {
         PlanningSessionStateMessage(sessionCode: id,
@@ -97,5 +98,31 @@ class PlanningSession {
             }
         }
         state = .votingFinished
+    }
+    
+    func startTimer(with timeInterval: TimeInterval, uuid: UUID) {
+        guard state == .voting,
+              ticket != nil
+        else {
+            delegate?.sendInvalidCommand(error: .invalidParameters, type: .host, clientUuid: uuid)
+            return
+        }
+        
+        timer = DispatchSource.makeTimerSource()
+        var runCount = 0
+        timer?.schedule(deadline: .now(), repeating: .seconds(1))
+  
+        timer?.setEventHandler() { [weak self] in
+            guard let self = self else { return }
+            runCount += 1
+            self.sendStateToAll()
+            if runCount >= Int(timeInterval) {
+                self.timer?.suspend()
+                self.finishVotes()
+                self.sendStateToAll()
+            }
+        }
+    
+        timer?.activate()
     }
 }

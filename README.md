@@ -662,6 +662,7 @@ A command is sent in the following structure:
 - `0003`: The server has run out of capacity, could not create a new planning session.
 - `0004`: Invalid identifier.
 - `0005`: Invalid parameters.
+- `0006`: Invalid state.
 
 ## Roadmap
 

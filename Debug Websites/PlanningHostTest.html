@@ -320,7 +320,7 @@
 
     function addTimerCommand(time) {
         let message = {
-            time: time
+            time: Number(time)
         }
         return new Command("ADD_TIMER", message)
     }

@@ -172,7 +172,6 @@ extension PlanningSystem {
             return
         }
         client.socket = webSocket
-        // TODO: Implement add timer logic
-        session.sendStateToAll()
+        session.startTimer(with: message.time, uuid: uuid)
     }
 }
