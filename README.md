@@ -10,20 +10,20 @@
 
 ## Table of Contents
 
-* [About the Project](#about-the-project)
-  * [Description](#description)
-  * [Built With](#built-with)
-* [Getting Started](#getting-started)
-  * [Prerequisites](#prerequisites)
-  * [Installation](#installation)
-* [Usage](#usage)
-  * [Swift Package Manager](#swift-package-manager)
-  * [Docker](#docker)
-  * [Commands](#commands)
-  * [Error codes](#error-codes)
-* [Roadmap](#roadmap)
-* [License](#license)
-* [Contact](#contact)
+- [About the Project](#about-the-project)
+  - [Description](#description)
+  - [Built With](#built-with)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+- [Usage](#usage)
+  - [Swift Package Manager](#swift-package-manager)
+  - [Docker](#docker)
+  - [Commands](#commands)
+  - [Error codes](#error-codes)
+- [Roadmap](#roadmap)
+- [License](#license)
+- [Contact](#contact)
 
 ## About The Project
 
@@ -48,16 +48,19 @@ To get a local copy up and running follow these simple example steps.
 
 1. XCode 12 Development Tools
 2. Install Vapor using brew.
- ```sh
- brew install vapor
- ```
+
+```sh
+brew install vapor
+```
 
 ### Installation
 
 1. Clone the repo
+
 ```sh
 git clone https://github.com/Operation-Winter/mamba-ios.git
 ```
+
 2. Open in XCode
 
 ## Usage
@@ -65,16 +68,19 @@ git clone https://github.com/Operation-Winter/mamba-ios.git
 ### Swift Package Manager
 
 Build package:
+
 ```sh
 swift build
 ```
 
 Test package:
+
 ```sh
 swift test
 ```
 
 Update or resolve package dependencies:
+
 ```sh
 swift package update
 ```
@@ -82,6 +88,7 @@ swift package update
 ### Docker
 
 To run the container:
+
 ```sh
 docker-compose up
 ```
@@ -90,11 +97,12 @@ docker-compose up
 
 Commands are sent between the backend and any front-end application using WebSockets.
 A command is sent in the following structure:
+
 ```json
 {
-    "uuid": "<Front-End UUID>",
-    "type": "<Command identifier>",
-    "message": { } //Contains the message body structure as specified below or null
+  "uuid": "<Front-End UUID>",
+  "type": "<Command identifier>",
+  "message": {} //Contains the message body structure as specified below or null
 }
 ```
 
@@ -222,6 +230,35 @@ A command is sent in the following structure:
     </td>
     <td>
       None
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <pre>EDIT_TICKET</pre>
+    </td>
+    <td>
+      Edit the details of the existing ticket
+    </td>
+    <td>
+      <pre lang="json">
+{ 
+  "title": "DM-10000", 
+  "description": "Blah blah"
+}</pre>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <pre>ADD_TIMER</pre>
+    </td>
+    <td>
+      Add a timer to the session to end voting when the timer ends.
+    </td>
+    <td>
+    <pre lang="json">
+{ 
+  "time":2
+}</pre>
     </td>
   </tr>
 </table>
@@ -428,6 +465,20 @@ A command is sent in the following structure:
       None
     </td>
   </tr>
+  <tr>
+    <td>
+      <pre>CHANGE_NAME</pre>
+    </td>
+    <td>
+      Change participant's name. Will fail if not the matching participant UUID.
+    </td>
+    <td>
+    <pre lang="json">
+{
+  "name":"TestName"
+}</pre>
+    </td>
+  </tr>
 </table>
 
 ##### Server to client
@@ -628,8 +679,6 @@ Armand Kamffer - [@Armgame](https://twitter.com/Armgame) - kamffer1@gmail.com
 
 [contributors-shield]: https://img.shields.io/github/contributors/Operation-Winter/mamba-backend-vapor?style=flat-square
 [contributors-url]: https://github.com/Operation-Winter/mamba-backend-vapor/graphs/contributors
-
 [stars-shield]: https://img.shields.io/github/stars/Operation-Winter/mamba-backend-vapor?style=flat-square?style=flat-square
 [stars-url]: https://github.com/Operation-Winter/mamba-backend-vapor/stargazers
-
 [roadmap]: Docs/Roadmap.png

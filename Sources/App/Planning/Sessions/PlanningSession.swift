@@ -52,11 +52,21 @@ class PlanningSession {
         state = .voting
     }
     
+    func updateTicket(title: String, description: String) {
+        ticket?.title = title
+        ticket?.description = description
+    }
+    
+    func updateParticipant(participantId: UUID, name: String) {
+        participants
+            .first { $0.participantId == participantId }?
+            .name = name
+    }
+    
     func add(vote card: PlanningCard?, uuid: UUID) {
-        guard
-            state == .voting,
-            let ticket = ticket,
-            participants.contains(where: { $0.participantId == uuid })
+        guard state == .voting,
+              let ticket = ticket,
+              participants.contains(where: { $0.participantId == uuid })
         else {
             delegate?.sendInvalidCommand(error: .invalidParameters, type: .join, clientUuid: uuid)
             return

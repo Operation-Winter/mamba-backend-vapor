@@ -29,6 +29,10 @@ extension PlanningSystem {
             revote(webSocket: webSocket, uuid: uuid)
         case .reconnect(let uuid):
             reconnect(webSocket: webSocket, uuid: uuid)
+        case .editTicket(let uuid, let message):
+            editTicket(message: message, webSocket: webSocket, uuid: uuid)
+        case .addTimer(let uuid, let message):
+            addTimer(message: message, webSocket: webSocket, uuid: uuid)
         }
     }
 
@@ -63,10 +67,9 @@ extension PlanningSystem {
     }
     
     // MARK: Add ticket command
-    private func addTicket(message: PlanningAddTicketMessage, webSocket: WebSocket, uuid: UUID) {
-        guard
-            let client = clients.find(uuid),
-            let session = sessions.find(id: client.sessionId)
+    private func addTicket(message: PlanningTicketMessage, webSocket: WebSocket, uuid: UUID) {
+        guard let client = clients.find(uuid),
+              let session = sessions.find(id: client.sessionId)
         else {
             sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
             return
@@ -80,9 +83,8 @@ extension PlanningSystem {
     
     // MARK: Skip vote command
     private func skipVote(message: PlanningSkipVoteMessage, webSocket: WebSocket, uuid: UUID) {
-        guard
-            let client = clients.find(uuid),
-            let session = sessions.find(id: client.sessionId)
+        guard let client = clients.find(uuid),
+              let session = sessions.find(id: client.sessionId)
         else {
             sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
             return
@@ -94,9 +96,8 @@ extension PlanningSystem {
     
     // MARK: Revote command
     private func revote(webSocket: WebSocket, uuid: UUID) {
-        guard
-            let client = clients.find(uuid),
-            let session = sessions.find(id: client.sessionId)
+        guard let client = clients.find(uuid),
+              let session = sessions.find(id: client.sessionId)
         else {
             sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
             return
@@ -108,9 +109,8 @@ extension PlanningSystem {
     
     // MARK: End session command
     private func endSession(webSocket: WebSocket, uuid: UUID) {
-        guard
-            let client = clients.find(uuid),
-            let session = sessions.find(id: client.sessionId)
+        guard let client = clients.find(uuid),
+              let session = sessions.find(id: client.sessionId)
         else {
             sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
             return
@@ -124,9 +124,8 @@ extension PlanningSystem {
     
     // MARK: Remove participant command
     func removeParticipant(message: PlanningRemoveParticipantMessage, webSocket: WebSocket, uuid: UUID) {
-        guard
-            let client = clients.find(uuid),
-            let session = sessions.find(id: client.sessionId)
+        guard let client = clients.find(uuid),
+              let session = sessions.find(id: client.sessionId)
         else {
             sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
             return
@@ -140,15 +139,40 @@ extension PlanningSystem {
     
     // MARK: Finish voting command
     func finishVoting(webSocket: WebSocket, uuid: UUID) {
-        guard
-            let client = clients.find(uuid),
-            let session = sessions.find(id: client.sessionId)
+        guard let client = clients.find(uuid),
+              let session = sessions.find(id: client.sessionId)
         else {
             sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
             return
         }
         client.socket = webSocket
         session.finishVotes()
+        session.sendStateToAll()
+    }
+    
+    // MARK: Edit ticket command
+    private func editTicket(message: PlanningTicketMessage, webSocket: WebSocket, uuid: UUID) {
+        guard let client = clients.find(uuid),
+              let session = sessions.find(id: client.sessionId)
+        else {
+            sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
+            return
+        }
+        client.socket = webSocket
+        session.updateTicket(title: message.title, description: message.description)
+        session.sendStateToAll()
+    }
+    
+    // MARK: Add timer command
+    private func addTimer(message: PlanningAddTimerMessage, webSocket: WebSocket, uuid: UUID) {
+        guard let client = clients.find(uuid),
+              let session = sessions.find(id: client.sessionId)
+        else {
+            sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
+            return
+        }
+        client.socket = webSocket
+        // TODO: Implement add timer logic
         session.sendStateToAll()
     }
 }

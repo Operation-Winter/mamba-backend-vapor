@@ -45,6 +45,14 @@
                 <button id="reconnectCommand">Reconnect</button>
             </td>
         </tr>
+        <tr>
+            <td>
+                <button id="changeNameCommand">Change Name Command</button>
+            </td>
+            <td>
+                <b>New name: </b><input id="changeNameInput" />
+            </td>
+        </tr>
     </table>
 
     <div class="input-fields">
@@ -175,5 +183,22 @@
             sendMessage(command);
         }, 200);
     };
+
+    // Change name command
+    const changeNameCommandButton = document.getElementById("changeNameCommand");
+    const changeNameInput = document.getElementById("changeNameInput");
+
+    changeNameCommandButton.onclick = function (event) {
+        let command = JSON.stringify(changeNameCommand(changeNameInput.value));
+        sendMessage(command);
+        changeNameInput.value = "";
+    };
+
+    function changeNameCommand(name) {
+        let message = {
+            name: name
+        }
+        return new Command("CHANGE_NAME", message)
+    }
 </script>
 </html>

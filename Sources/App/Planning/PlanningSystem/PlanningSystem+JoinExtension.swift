@@ -21,6 +21,8 @@ extension PlanningSystem {
             leaveSession(webSocket: webSocket, uuid: uuid)
         case .reconnect(let uuid):
             reconnect(webSocket: webSocket, uuid: uuid)
+        case .changeName(let uuid, let message):
+            changeName(message: message, webSocket: webSocket, uuid: uuid)
         }
     }
     
@@ -41,9 +43,8 @@ extension PlanningSystem {
     
     // MARK: Vote command
     func vote(message: PlanningVoteMessage, webSocket: WebSocket, uuid: UUID) {
-        guard
-            let client = clients.find(uuid),
-            let session = sessions.find(id: client.sessionId)
+        guard let client = clients.find(uuid),
+              let session = sessions.find(id: client.sessionId)
         else {
             sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
             return
@@ -55,9 +56,8 @@ extension PlanningSystem {
 
     // MARK: Vote command
     func leaveSession(webSocket: WebSocket, uuid: UUID) {
-        guard
-            let client = clients.find(uuid),
-            let session = sessions.find(id: client.sessionId)
+        guard let client = clients.find(uuid),
+              let session = sessions.find(id: client.sessionId)
         else {
             sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
             return
@@ -65,6 +65,19 @@ extension PlanningSystem {
         client.socket = webSocket
         session.remove(participantId: uuid)
         clients.close(uuid)
+        session.sendStateToAll()
+    }
+    
+    // MARK: Change name command
+    func changeName(message: PlanningChangeNameMessage, webSocket: WebSocket, uuid: UUID) {
+        guard let client = clients.find(uuid),
+              let session = sessions.find(id: client.sessionId)
+        else {
+            sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
+            return
+        }
+        client.socket = webSocket
+        session.updateParticipant(participantId: uuid, name: message.name)
         session.sendStateToAll()
     }
 }

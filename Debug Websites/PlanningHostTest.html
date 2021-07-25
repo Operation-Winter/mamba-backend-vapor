@@ -73,6 +73,25 @@
                     <button id="reconnectCommand">Reconnect</button>
                 </td>
             </tr>
+            <tr>
+                <td>
+                    <button id="editTicketCommand">Edit Ticket</button>
+                </td>
+                <td>
+                    <b>Title: </b><input id="editTicketTitle" />
+                </td>
+                <td>
+                    <b>Description: </b><input id="editTicketDescription" />
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <button id="addTimerCommand">Add Timer</button>
+                </td>
+                <td>
+                    <b>Seconds: </b><input id="addTimerInput" />
+                </td>
+            </tr>
         </table>
 
         <div class="input-fields">
@@ -268,6 +287,43 @@
             sendMessage(command);
         }, 200);
     };
+
+    // Edit ticket command
+    const editTicketCommandButton = document.getElementById("editTicketCommand");
+    const editTicketTitle = document.getElementById("editTicketTitle");
+    const editTicketDescription = document.getElementById("editTicketDescription");
+
+    editTicketCommandButton.onclick = function (event) {
+        let command = JSON.stringify(editTicketCommand(editTicketTitle.value, editTicketDescription.value));
+        sendMessage(command);
+        editTicketTitle.value = "";
+        editTicketDescription.value = "";
+    };
+
+    function editTicketCommand(title, description) {
+        let message = {
+            title: title,
+            description: description
+        }
+        return new Command("EDIT_TICKET", message)
+    }
+
+    // Add timer command
+    const addTimerCommandButton = document.getElementById("addTimerCommand");
+    const addTimerInput = document.getElementById("addTimerInput");
+
+    addTimerCommandButton.onclick = function (event) {
+        let command = JSON.stringify(addTimerCommand(addTimerInput.value));
+        sendMessage(command);
+        addTimerInput.value = "";
+    };
+
+    function addTimerCommand(time) {
+        let message = {
+            time: time
+        }
+        return new Command("ADD_TIMER", message)
+    }
 </script>
 
 </html>
