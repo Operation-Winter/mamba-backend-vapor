@@ -261,6 +261,17 @@ A command is sent in the following structure:
 }</pre>
     </td>
   </tr>
+    <tr>
+    <td>
+      <pre>CANCEL_TIMER</pre>
+    </td>
+    <td>
+      Cancel an active timer.
+    </td>
+    <td>
+      None
+    </td>
+  </tr>
 </table>
 
 ##### Server to client

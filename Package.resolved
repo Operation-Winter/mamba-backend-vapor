@@ -30,11 +30,11 @@
       },
       {
         "package": "mamba-networking",
-        "repositoryURL": "/Users/armandkamffer/Repositories/mamba-networking",
+        "repositoryURL": "https://github.com/Operation-Winter/mamba-networking.git",
         "state": {
           "branch": null,
-          "revision": "850525edde8a6f3c0744468bd6c6c3f8f45cdddd",
-          "version": "1.1.2"
+          "revision": "586cf50d731ba29bc9bc648cfa0448ce572e82f4",
+          "version": "1.2.0"
         }
       },
       {

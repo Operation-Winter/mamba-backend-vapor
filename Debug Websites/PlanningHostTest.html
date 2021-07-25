@@ -92,6 +92,11 @@
                     <b>Seconds: </b><input id="addTimerInput" />
                 </td>
             </tr>
+            <tr>
+                <td>
+                    <button id="cancelTimerCommand">Cancel Timer</button>
+                </td>
+            </tr>
         </table>
 
         <div class="input-fields">
@@ -324,6 +329,17 @@
         }
         return new Command("ADD_TIMER", message)
     }
+
+    // Cancel timer command
+    const cancelTimerCommandButton = document.getElementById("cancelTimerCommand");
+
+    cancelTimerCommandButton.onclick = function (event) {
+        let command = JSON.stringify({
+            uuid: uuid,
+            type: "CANCEL_TIMER"
+        });
+        sendMessage(command);
+    };
 </script>
 
 </html>

@@ -17,13 +17,15 @@ class PlanningSession {
     private(set) var state: PlanningSessionState
     private(set) weak var delegate: PlanningSessionDelegate?
     private var timer: DispatchSourceTimer?
+    private var timerTimeLeft: Int?
     
     private var stateMessage: PlanningSessionStateMessage {
         PlanningSessionStateMessage(sessionCode: id,
                                     sessionName: name,
                                     availableCards: availableCards,
                                     participants: participants,
-                                    ticket: ticket)
+                                    ticket: ticket,
+                                    timeLeft: timerTimeLeft)
     }
     
     init(id: String, name: String, availableCards: [PlanningCard], participants: [PlanningParticipant] = [], ticket: PlanningTicket? = nil, state: PlanningSessionState = .none, delegate: PlanningSessionDelegate? = nil) {
@@ -115,14 +117,30 @@ class PlanningSession {
         timer?.setEventHandler() { [weak self] in
             guard let self = self else { return }
             runCount += 1
+            self.timerTimeLeft = Int(timeInterval) - runCount
             self.sendStateToAll()
+            
             if runCount >= Int(timeInterval) {
                 self.timer?.suspend()
+                self.timerTimeLeft = nil
                 self.finishVotes()
                 self.sendStateToAll()
             }
         }
     
         timer?.activate()
+    }
+    
+    func cancelTimer(uuid: UUID) {
+        guard state == .voting,
+              let timer = timer
+        else {
+            delegate?.sendInvalidCommand(error: .invalidParameters, type: .host, clientUuid: uuid)
+            return
+        }
+        
+        timer.cancel()
+        timerTimeLeft = nil
+        sendStateToAll()
     }
 }
