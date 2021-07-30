@@ -28,7 +28,7 @@ extension PlanningSystem {
         case .revote(let uuid):
             revote(webSocket: webSocket, uuid: uuid)
         case .reconnect(let uuid):
-            reconnect(webSocket: webSocket, uuid: uuid)
+            reconnectHost(webSocket: webSocket, uuid: uuid)
         case .editTicket(let uuid, let message):
             editTicket(message: message, webSocket: webSocket, uuid: uuid)
         case .addTimer(let uuid, let message):
@@ -46,7 +46,10 @@ extension PlanningSystem {
             sendInvalidCommand(error: .noServerCapacity, type: .host, webSocket: webSocket)
             return
         }
-        let client = PlanningWebSocketClient(id: uuid, socket: webSocket, sessionId: sessionId, type: .host)
+        let client = PlanningWebSocketClient(id: uuid, socket: webSocket, sessionId: sessionId, type: .host, connected: true)
+        
+        
+        
         let session = PlanningSession(id: sessionId,
                                       name: message.sessionName,
                                       availableCards: message.availableCards,
@@ -201,5 +204,15 @@ extension PlanningSystem {
         }
         client.socket = webSocket
         session.sendPreviousTickets(uuid: uuid)
+    }
+    
+    // MARK: Reconnect command
+    func reconnectHost(webSocket: WebSocket, uuid: UUID) {
+        guard let client = clients.find(uuid) else {
+            sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
+            return
+        }
+        client.socket = webSocket
+        client.connected = true
     }
 }

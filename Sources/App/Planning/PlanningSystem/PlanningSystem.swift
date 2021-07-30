@@ -7,10 +7,12 @@
 
 import Vapor
 import MambaNetworking
+import Combine
 
 class PlanningSystem {
     private(set) var clients: PlanningWebSocketClients
     private(set) var sessions: PlanningSessions
+    var subscriptions: [AnyCancellable] = []
     
     init(eventLoop: EventLoop) {
         clients = PlanningWebSocketClients(eventLoop: eventLoop)
@@ -61,25 +63,12 @@ class PlanningSystem {
         guard let data = try? JSONEncoder().encode(PlanningCommands.JoinServerSend.invalidSession) else { return }
         webSocket.send([UInt8](data))
     }
-    
-    func reconnect(webSocket: WebSocket, uuid: UUID) {
-        guard
-            let client = clients.find(uuid),
-            let session = sessions.find(id: client.sessionId)
-        else {
-            sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
-            return
-        }
-        client.socket = webSocket
-        session.sendState(to: uuid)
-    }
 }
 
 extension PlanningSystem: PlanningSessionDelegate {
     func send<T: Encodable>(command: T, clientUuid: UUID) {
-        guard
-            let client = clients.find(clientUuid),
-            let data = try? JSONEncoder().encode(command)
+        guard let client = clients.find(clientUuid),
+              let data = try? JSONEncoder().encode(command)
         else { return }
         client.socket.send([UInt8](data))
     }

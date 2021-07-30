@@ -15,7 +15,7 @@ class WebSocketClients<T: WebSocketClient> {
         storage.values.filter { !$0.socket.isClosed }
     }
     
-    init(eventLoop: EventLoop, storage: [UUID : T] = [:]) {
+    init(eventLoop: EventLoop, storage: [UUID: T] = [:]) {
         self.eventLoop = eventLoop
         self.storage = storage
     }

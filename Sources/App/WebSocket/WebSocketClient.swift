@@ -10,4 +10,5 @@ import Vapor
 protocol WebSocketClient {
     var id: UUID { get }
     var socket: WebSocket { get }
+    var connected: Bool { get set }
 }

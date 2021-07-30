@@ -20,7 +20,7 @@ extension PlanningSystem {
         case .leaveSession(let uuid):
             leaveSession(webSocket: webSocket, uuid: uuid)
         case .reconnect(let uuid):
-            reconnect(webSocket: webSocket, uuid: uuid)
+            reconnectJoin(webSocket: webSocket, uuid: uuid)
         case .changeName(let uuid, let message):
             changeName(message: message, webSocket: webSocket, uuid: uuid)
         }
@@ -33,10 +33,21 @@ extension PlanningSystem {
             return
         }
         
-        let client = PlanningWebSocketClient(id: uuid, socket: webSocket, sessionId: session.id, type: .join)
+        let client = PlanningWebSocketClient(id: uuid, socket: webSocket, sessionId: session.id, type: .join, connected: true)
         clients.add(client)
         
-        let participant = PlanningParticipant(participantId: client.id, name: message.participantName)
+        let participant = PlanningParticipant(participantId: client.id,
+                                              name: message.participantName,
+                                              connected: true)
+        
+        client.$connected
+            .dropFirst()
+            .sink { connected in
+                participant.connected = connected
+                session.sendStateToAll()
+            }
+            .store(in: &subscriptions)
+        
         session.add(participant: participant)
         session.sendStateToAll()
     }
@@ -46,7 +57,7 @@ extension PlanningSystem {
         guard let client = clients.find(uuid),
               let session = sessions.find(id: client.sessionId)
         else {
-            sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
+            sendInvalidCommand(error: .invalidUuid, type: .join, webSocket: webSocket)
             return
         }
         client.socket = webSocket
@@ -59,7 +70,7 @@ extension PlanningSystem {
         guard let client = clients.find(uuid),
               let session = sessions.find(id: client.sessionId)
         else {
-            sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
+            sendInvalidCommand(error: .invalidUuid, type: .join, webSocket: webSocket)
             return
         }
         client.socket = webSocket
@@ -73,11 +84,21 @@ extension PlanningSystem {
         guard let client = clients.find(uuid),
               let session = sessions.find(id: client.sessionId)
         else {
-            sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
+            sendInvalidCommand(error: .invalidUuid, type: .join, webSocket: webSocket)
             return
         }
         client.socket = webSocket
         session.updateParticipant(participantId: uuid, name: message.name)
         session.sendStateToAll()
+    }
+    
+    // MARK: Reconnect command
+    func reconnectJoin(webSocket: WebSocket, uuid: UUID) {
+        guard let client = clients.find(uuid) else {
+            sendInvalidCommand(error: .invalidUuid, type: .join, webSocket: webSocket)
+            return
+        }
+        client.socket = webSocket
+        client.connected = true
     }
 }
