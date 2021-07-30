@@ -272,6 +272,18 @@ A command is sent in the following structure:
       None
     </td>
   </tr>
+  </tr>
+    <tr>
+    <td>
+      <pre>PREVIOUS_TICKETS</pre>
+    </td>
+    <td>
+      Request previous tickets that have been voted on.
+    </td>
+    <td>
+      None
+    </td>
+  </tr>
 </table>
 
 ##### Server to client
@@ -404,6 +416,32 @@ A command is sent in the following structure:
 {
   "code":"0000",
   "description":"No session code has been specified"
+}</pre>
+    </td>
+  </tr>
+  </tr>
+    <tr>
+    <td>
+      <pre>PREVIOUS_TICKETS</pre>
+    </td>
+    <td>
+      Response that contains previous tickets that have been voted on.
+    </td>
+    <td>
+        <pre lang="json">
+{
+  "previousTickets":[
+    { 
+      "title":"Test",
+      "ticketVotes":[
+        {
+          "participantId":"D520EFDD-C4BD-450B-9531-30E404B77D0F",
+          "selectedCard":"FIVE"
+          }
+        ],
+      "description":""
+    }
+  ]
 }</pre>
     </td>
   </tr>

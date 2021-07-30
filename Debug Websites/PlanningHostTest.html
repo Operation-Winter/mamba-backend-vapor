@@ -97,6 +97,11 @@
                     <button id="cancelTimerCommand">Cancel Timer</button>
                 </td>
             </tr>
+            <tr>
+                <td>
+                    <button id="previousTicketsCommand">Previous Tickets</button>
+                </td>
+            </tr>
         </table>
 
         <div class="input-fields">
@@ -337,6 +342,17 @@
         let command = JSON.stringify({
             uuid: uuid,
             type: "CANCEL_TIMER"
+        });
+        sendMessage(command);
+    };
+    
+    // Previous tickets command
+    const previousTicketsCommandButton = document.getElementById("previousTicketsCommand");
+
+    previousTicketsCommandButton.onclick = function (event) {
+        let command = JSON.stringify({
+            uuid: uuid,
+            type: "PREVIOUS_TICKETS"
         });
         sendMessage(command);
     };

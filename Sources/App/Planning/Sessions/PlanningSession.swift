@@ -15,6 +15,7 @@ class PlanningSession {
     private(set) var participants: [PlanningParticipant]
     private(set) var ticket: PlanningTicket?
     private(set) var state: PlanningSessionState
+    private(set) var previousTickets: [PlanningTicket]
     private(set) weak var delegate: PlanningSessionDelegate?
     private var timer: DispatchSourceTimer?
     private var timerTimeLeft: Int?
@@ -28,7 +29,14 @@ class PlanningSession {
                                     timeLeft: timerTimeLeft)
     }
     
-    init(id: String, name: String, availableCards: [PlanningCard], participants: [PlanningParticipant] = [], ticket: PlanningTicket? = nil, state: PlanningSessionState = .none, delegate: PlanningSessionDelegate? = nil) {
+    init(id: String,
+         name: String,
+         availableCards: [PlanningCard],
+         participants: [PlanningParticipant] = [],
+         ticket: PlanningTicket? = nil,
+         state: PlanningSessionState = .none,
+         delegate: PlanningSessionDelegate? = nil,
+         previousTickets: [PlanningTicket] = []) {
         self.id = id
         self.name = name
         self.availableCards = availableCards
@@ -36,6 +44,7 @@ class PlanningSession {
         self.ticket = ticket
         self.state = state
         self.delegate = delegate
+        self.previousTickets = previousTickets
     }
     
     func sendState(to uuid: UUID) {
@@ -51,6 +60,10 @@ class PlanningSession {
     }
     
     func add(ticket: PlanningTicket) {
+        if let previousTicket = self.ticket,
+           !previousTicket.ticketVotes.isEmpty {
+            previousTickets.append(previousTicket)
+        }
         self.ticket = ticket
         state = .voting
     }
@@ -142,5 +155,10 @@ class PlanningSession {
         timer.cancel()
         timerTimeLeft = nil
         sendStateToAll()
+    }
+    
+    func sendPreviousTickets(uuid: UUID) {
+        let message = PlanningPreviousTicketsMessage(previousTickets: previousTickets)
+        delegate?.send(hostCommand: .previousTickets(message: message), clientUuid: uuid)
     }
 }

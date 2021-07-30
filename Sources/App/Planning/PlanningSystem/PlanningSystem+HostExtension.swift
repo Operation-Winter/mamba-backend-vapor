@@ -35,6 +35,8 @@ extension PlanningSystem {
             addTimer(message: message, webSocket: webSocket, uuid: uuid)
         case .cancelTimer(let uuid):
             cancelTimer(webSocket: webSocket, uuid: uuid)
+        case .previousTickets(uuid: let uuid):
+            previousTickets(webSocket: webSocket, uuid: uuid)
         }
     }
 
@@ -187,5 +189,17 @@ extension PlanningSystem {
         }
         client.socket = webSocket
         session.cancelTimer(uuid: uuid)
+    }
+    
+    // MARK: Previous tickets command
+    private func previousTickets(webSocket: WebSocket, uuid: UUID) {
+        guard let client = clients.find(uuid),
+              let session = sessions.find(id: client.sessionId)
+        else {
+            sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
+            return
+        }
+        client.socket = webSocket
+        session.sendPreviousTickets(uuid: uuid)
     }
 }
