@@ -8,14 +8,18 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/vapor/vapor.git", from: "4.0.0"),
-        .package(name: "mamba-networking", url: "https://github.com/Operation-Winter/mamba-networking.git", from: "1.2.0")
+        .package(name: "mamba-networking", url: "https://github.com/Operation-Winter/mamba-networking.git", from: "1.4.0"),
+        .package(url: "https://github.com/OpenCombine/OpenCombine.git", from: "0.12.0")
     ],
     targets: [
         .target(
             name: "App",
             dependencies: [
                 .product(name: "Vapor", package: "vapor"),
-                .product(name: "MambaNetworking", package: "mamba-networking")
+                .product(name: "MambaNetworking", package: "mamba-networking"),
+                "OpenCombine",
+                .product(name: "OpenCombineFoundation", package: "OpenCombine"),
+                .product(name: "OpenCombineDispatch", package: "OpenCombine")
             ],
             swiftSettings: [
                 .unsafeFlags(["-cross-module-optimization"], .when(configuration: .release))

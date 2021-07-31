@@ -7,7 +7,7 @@
 
 import Vapor
 import MambaNetworking
-import Combine
+import OpenCombine
 
 class PlanningSystem {
     private(set) var clients: PlanningWebSocketClients

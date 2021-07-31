@@ -6,9 +6,9 @@
 //
 
 import Vapor
-import Combine
+import OpenCombine
 
-class PlanningWebSocketClient: WebSocketClient, ObservableObject {
+class PlanningWebSocketClient: WebSocketClient, OpenCombine.ObservableObject {
     var id: UUID
     var socket: WebSocket {
         didSet {
@@ -17,7 +17,7 @@ class PlanningWebSocketClient: WebSocketClient, ObservableObject {
     }
     var sessionId: String
     var type: PlanningSystemType
-    @Published var connected: Bool
+    @OpenCombine.Published public var connected: Bool
     private let pingInterval: Int64 = 15
     private let timeout: Int64 = 5
     private var timer: DispatchSourceTimer?
