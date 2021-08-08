@@ -215,6 +215,6 @@ extension PlanningSystem {
         }
         client.socket = webSocket
         client.connected = true
-        session.sendState(to uuid: client)
+        session.sendState(to: client.id)
     }
 }

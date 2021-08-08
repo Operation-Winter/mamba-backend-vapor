@@ -60,7 +60,8 @@ class PlanningSession {
     }
     
     func add(ticket: PlanningTicket) {
-        if let previousTicket = self.ticket,
+        if state == .votingFinished,
+           let previousTicket = self.ticket,
            !previousTicket.ticketVotes.isEmpty {
             previousTickets.append(previousTicket)
         }
@@ -158,6 +159,13 @@ class PlanningSession {
     }
     
     func sendPreviousTickets(uuid: UUID) {
+        if state == .votingFinished,
+           let currentTicket = self.ticket,
+           !currentTicket.ticketVotes.isEmpty,
+           !previousTickets.contains(where: { ObjectIdentifier($0) == ObjectIdentifier(currentTicket) }) {
+            previousTickets.append(currentTicket)
+        }
+        
         let message = PlanningPreviousTicketsMessage(previousTickets: previousTickets)
         delegate?.send(hostCommand: .previousTickets(message: message), clientUuid: uuid)
     }
