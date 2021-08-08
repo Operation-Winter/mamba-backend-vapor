@@ -141,7 +141,8 @@ A command is sent in the following structure:
   "sessionName": "Example session", 
   "availableCards": [
     "ZERO", "ONE", "TWO", "THREE", "FIVE", "EIGHT", "THIRTEEN", "TWENTY", "FOURTY", "HUNDRED", "QUESTION", "COFFEE"
-  ] 
+  ],
+  "autoCompleteVoting": true
 }</pre>
     </td>
   </tr>
