@@ -208,11 +208,13 @@ extension PlanningSystem {
     
     // MARK: Reconnect command
     func reconnectHost(webSocket: WebSocket, uuid: UUID) {
-        guard let client = clients.find(uuid) else {
+        guard let client = clients.find(uuid),
+              let session = sessions.find(id: client.sessionId) else {
             sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
             return
         }
         client.socket = webSocket
         client.connected = true
+        session.sendState(to uuid: client)
     }
 }
