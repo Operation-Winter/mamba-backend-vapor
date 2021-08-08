@@ -25,6 +25,9 @@
                 <td>
                     <b>Session name: </b><input id="sessionName" />
                 </td>
+                <td>
+                    <b>Auto complete voting: </b><input type="checkbox" id="autoCompleteVoting" />
+                </td>
             </tr>
             <tr>
                 <td>
@@ -171,14 +174,15 @@
     // Start Session Command
     const startSessionCommandButton = document.getElementById("startCommand");
     const sessionNameInput = document.getElementById("sessionName");
-
+    const autoCompleteVotingInput = document.getElementById("autoCompleteVoting");
+    
     startSessionCommandButton.onclick = function (event) {
-        let command = JSON.stringify(startSessionCommand(sessionNameInput.value));
+        let command = JSON.stringify(startSessionCommand(sessionNameInput.value, autoCompleteVotingInput.checked));
         sendMessage(command);
         sessionNameInput.value = "";
     };
 
-    function startSessionCommand(sessionName) {
+    function startSessionCommand(sessionName, autoCompleteVoting) {
         let message = {
             sessionName: sessionName,
             availableCards: [
@@ -194,7 +198,8 @@
                 "HUNDRED",
                 "QUESTION",
                 "COFFEE"
-            ]
+            ],
+            autoCompleteVoting: autoCompleteVoting
         }
         return new Command("START_SESSION", message)
     }

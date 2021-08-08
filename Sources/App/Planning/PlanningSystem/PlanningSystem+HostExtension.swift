@@ -48,11 +48,10 @@ extension PlanningSystem {
         }
         let client = PlanningWebSocketClient(id: uuid, socket: webSocket, sessionId: sessionId, type: .host, connected: true)
         
-        
-        
         let session = PlanningSession(id: sessionId,
                                       name: message.sessionName,
                                       availableCards: message.availableCards,
+                                      autoCompleteVoting: message.autoCompleteVoting,
                                       delegate: self)
         
         clients.add(client)

@@ -16,6 +16,7 @@ class PlanningSession {
     private(set) var ticket: PlanningTicket?
     private(set) var state: PlanningSessionState
     private(set) var previousTickets: [PlanningTicket]
+    private(set) var autoCompleteVoting: Bool
     private(set) weak var delegate: PlanningSessionDelegate?
     private var timer: DispatchSourceTimer?
     private var timerTimeLeft: Int?
@@ -32,6 +33,7 @@ class PlanningSession {
     init(id: String,
          name: String,
          availableCards: [PlanningCard],
+         autoCompleteVoting: Bool,
          participants: [PlanningParticipant] = [],
          ticket: PlanningTicket? = nil,
          state: PlanningSessionState = .none,
@@ -39,6 +41,7 @@ class PlanningSession {
          previousTickets: [PlanningTicket] = []) {
         self.id = id
         self.name = name
+        self.autoCompleteVoting = autoCompleteVoting
         self.availableCards = availableCards
         self.participants = participants
         self.ticket = ticket
@@ -92,7 +95,8 @@ class PlanningSession {
         let vote = PlanningTicketVote(participantId: uuid, selectedCard: card)
         ticket.add(vote: vote)
         
-        if ticket.ticketVotes.count == participants.count {
+        if autoCompleteVoting,
+           ticket.ticketVotes.count == participants.count {
             state = .votingFinished
         }
     }
