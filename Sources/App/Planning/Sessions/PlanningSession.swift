@@ -42,7 +42,7 @@ class PlanningSession {
         self.id = id
         self.name = name
         self.autoCompleteVoting = autoCompleteVoting
-        self.availableCards = availableCards
+        self.availableCards = availableCards.sorted { $0.sortOrder < $1.sortOrder }
         self.participants = participants
         self.ticket = ticket
         self.state = state
