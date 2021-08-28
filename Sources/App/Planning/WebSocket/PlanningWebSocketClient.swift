@@ -18,7 +18,7 @@ class PlanningWebSocketClient: WebSocketClient, OpenCombine.ObservableObject {
     var sessionId: String
     var type: PlanningSystemType
     @OpenCombine.Published public var connected: Bool
-    private let pingInterval: Int64 = 15
+    private let pingInterval: Int64 = 5
     private let timeout: Int64 = 5
     private var timer: DispatchSourceTimer?
     private var timeLeft: Int64 = 0
