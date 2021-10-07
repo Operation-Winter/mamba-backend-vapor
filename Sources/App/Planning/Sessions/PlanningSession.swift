@@ -59,6 +59,7 @@ class PlanningSession {
     }
     
     func add(participant: PlanningParticipant) {
+        guard !participants.contains(where: { $0.participantId == participant.participantId }) else { return }
         participants.append(participant)
     }
     
