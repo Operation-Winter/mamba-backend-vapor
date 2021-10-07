@@ -7,11 +7,10 @@ let package = Package(
        .macOS(.v10_15)
     ],
     dependencies: [
-        .package(url: "https://github.com/vapor/vapor.git", from: "4.0.0"),
+        .package(url: "https://github.com/vapor/vapor.git", from: "4.49.0"),
         .package(name: "mamba-networking", url: "https://github.com/Operation-Winter/mamba-networking.git", from: "1.6.0"),
         .package(url: "https://github.com/OpenCombine/OpenCombine.git", from: "0.12.0")
-    ],
-    targets: [
+    ], targets: [
         .target(
             name: "App",
             dependencies: [
