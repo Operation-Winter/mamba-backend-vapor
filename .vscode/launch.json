@@ -1,0 +1,33 @@
+{
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug Run",
+            "program": "${workspaceFolder:mamba-backend-vapor}/.build/debug/Run",
+            "args": [],
+            "cwd": "${workspaceFolder:mamba-backend-vapor}",
+            "preLaunchTask": "swift: Build Debug Run"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Release Run",
+            "program": "${workspaceFolder:mamba-backend-vapor}/.build/release/Run",
+            "args": [],
+            "cwd": "${workspaceFolder:mamba-backend-vapor}",
+            "preLaunchTask": "swift: Build Release Run"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Test mamba",
+            "program": "/Applications/Xcode-13.3.0.app/Contents/Developer/usr/bin/xctest",
+            "args": [
+                ".build/debug/mambaPackageTests.xctest"
+            ],
+            "cwd": "${workspaceFolder:mamba-backend-vapor}",
+            "preLaunchTask": "swift: Build All"
+        }
+    ]
+}
