@@ -7,9 +7,14 @@
 
 import Foundation
 import MambaNetworking
+import OpenCombine
 
-class PlanningSession {
-    private(set) var id: String
+actor PlanningSession {
+    nonisolated let id: CurrentValueSubject<String, Never>
+    
+    private(set) var _id: String {
+        didSet { id.value = _id }
+    }
     private(set) var name: String
     private(set) var availableCards: [PlanningCard]
     private(set) var participants: [PlanningParticipant]
@@ -22,7 +27,7 @@ class PlanningSession {
     private var timerTimeLeft: Int?
     
     private var stateMessage: PlanningSessionStateMessage {
-        PlanningSessionStateMessage(sessionCode: id,
+        PlanningSessionStateMessage(sessionCode: _id,
                                     sessionName: name,
                                     availableCards: availableCards,
                                     participants: participants,
@@ -39,7 +44,8 @@ class PlanningSession {
          state: PlanningSessionState = .none,
          delegate: PlanningSessionDelegate? = nil,
          previousTickets: [PlanningTicket] = []) {
-        self.id = id
+        self._id = id
+        self.id = CurrentValueSubject(_id)
         self.name = name
         self.autoCompleteVoting = autoCompleteVoting
         self.availableCards = availableCards.sorted { $0.sortOrder < $1.sortOrder }
@@ -55,7 +61,7 @@ class PlanningSession {
     }
     
     func sendStateToAll() {
-        delegate?.send(stateMessage: stateMessage, state: state, sessionId: id)
+        delegate?.send(stateMessage: stateMessage, state: state, sessionId: _id)
     }
     
     func add(participant: PlanningParticipant) {
@@ -128,26 +134,30 @@ class PlanningSession {
             delegate?.sendInvalidCommand(error: .invalidParameters, type: .host, clientUuid: uuid)
             return
         }
-        
+        timerTimeLeft = Int(timeInterval)
         timer = DispatchSource.makeTimerSource()
-        var runCount = 0
         timer?.schedule(deadline: .now(), repeating: .seconds(1))
   
         timer?.setEventHandler() { [weak self] in
             guard let self = self else { return }
-            runCount += 1
-            self.timerTimeLeft = Int(timeInterval) - runCount
-            self.sendStateToAll()
-            
-            if runCount >= Int(timeInterval) {
-                self.timer?.suspend()
-                self.timerTimeLeft = nil
-                self.finishVotes()
-                self.sendStateToAll()
+            Task {
+                await self.configureTimerTimeLeft((self.timerTimeLeft ?? 1) - 1)
+                await self.sendStateToAll()
+                
+                if await self.timerTimeLeft ?? 0 <= 0 {
+                    await self.timer?.suspend()
+                    await self.configureTimerTimeLeft(nil)
+                    await self.finishVotes()
+                    await self.sendStateToAll()
+                }
             }
         }
     
         timer?.activate()
+    }
+    
+    func configureTimerTimeLeft(_ timeLeft: Int?) {
+        timerTimeLeft = timeLeft
     }
     
     func cancelTimer(uuid: UUID) {

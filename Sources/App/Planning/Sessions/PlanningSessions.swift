@@ -19,11 +19,11 @@ class PlanningSessions {
     }
     
     func add(_ session: PlanningSession) {
-        storage[session.id] = session
+        storage[session.id.value] = session
     }
     
     func remove(_ session: PlanningSession) {
-        storage[session.id] = nil
+        storage[session.id.value] = nil
     }
     
     func find(id: String) -> PlanningSession? {

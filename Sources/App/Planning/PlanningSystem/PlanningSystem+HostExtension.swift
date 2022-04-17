@@ -57,7 +57,9 @@ extension PlanningSystem {
         clients.add(client)
         sessions.add(session)
         
-        session.sendStateToAll()
+        Task {
+            await session.sendStateToAll()
+        }
     }
     
     private func generateSessionId() -> String? {
@@ -83,8 +85,11 @@ extension PlanningSystem {
         client.socket = webSocket
         let ticket = PlanningTicket(title: message.title,
                                     description: message.description)
-        session.add(ticket: ticket)
-        session.sendStateToAll()
+        
+        Task {
+            await session.add(ticket: ticket)
+            await session.sendStateToAll()
+        }
     }
     
     // MARK: Skip vote command
@@ -96,8 +101,11 @@ extension PlanningSystem {
             return
         }
         client.socket = webSocket
-        session.add(vote: nil, uuid: message.participantId)
-        session.sendStateToAll()
+        
+        Task {
+            await session.add(vote: nil, uuid: message.participantId)
+            await session.sendStateToAll()
+        }
     }
     
     // MARK: Revote command
@@ -109,8 +117,11 @@ extension PlanningSystem {
             return
         }
         client.socket = webSocket
-        session.resetVotes()
-        session.sendStateToAll()
+        
+        Task {
+            await session.resetVotes()
+            await session.sendStateToAll()
+        }
     }
     
     // MARK: End session command
@@ -122,9 +133,9 @@ extension PlanningSystem {
             return
         }
         client.socket = webSocket
-        send(joinCommand: .endSession, sessionId: session.id)
-        clients.close(sessionId: session.id, type: .host)
-        clients.close(sessionId: session.id, type: .join)
+        send(joinCommand: .endSession, sessionId: session.id.value)
+        clients.close(sessionId: session.id.value, type: .host)
+        clients.close(sessionId: session.id.value, type: .join)
         sessions.remove(session)
     }
     
@@ -138,9 +149,12 @@ extension PlanningSystem {
         }
         client.socket = webSocket
         send(joinCommand: .removeParticipant, clientUuid: message.participantId)
-        session.remove(participantId: message.participantId)
-        clients.close(message.participantId)
-        session.sendStateToAll()
+        
+        Task {
+            await session.remove(participantId: message.participantId)
+            clients.close(message.participantId)
+            await session.sendStateToAll()
+        }
     }
     
     // MARK: Finish voting command
@@ -152,8 +166,11 @@ extension PlanningSystem {
             return
         }
         client.socket = webSocket
-        session.finishVotes()
-        session.sendStateToAll()
+        
+        Task {
+            await session.finishVotes()
+            await session.sendStateToAll()
+        }
     }
     
     // MARK: Edit ticket command
@@ -165,8 +182,11 @@ extension PlanningSystem {
             return
         }
         client.socket = webSocket
-        session.updateTicket(title: message.title, description: message.description)
-        session.sendStateToAll()
+        
+        Task {
+            await session.updateTicket(title: message.title, description: message.description)
+            await session.sendStateToAll()
+        }
     }
     
     // MARK: Add timer command
@@ -178,7 +198,10 @@ extension PlanningSystem {
             return
         }
         client.socket = webSocket
-        session.startTimer(with: message.time, uuid: uuid)
+        
+        Task {
+            await session.startTimer(with: message.time, uuid: uuid)
+        }
     }
     
     // MARK: Cancel timer command
@@ -190,7 +213,10 @@ extension PlanningSystem {
             return
         }
         client.socket = webSocket
-        session.cancelTimer(uuid: uuid)
+        
+        Task {
+            await session.cancelTimer(uuid: uuid)
+        }
     }
     
     // MARK: Previous tickets command
@@ -202,7 +228,10 @@ extension PlanningSystem {
             return
         }
         client.socket = webSocket
-        session.sendPreviousTickets(uuid: uuid)
+        
+        Task {
+            await session.sendPreviousTickets(uuid: uuid)
+        }
     }
     
     // MARK: Reconnect command
@@ -214,6 +243,9 @@ extension PlanningSystem {
         }
         client.socket = webSocket
         client.connected = true
-        session.sendState(to: client.id)
+        
+        Task {
+            await session.sendState(to: client.id)
+        }
     }
 }

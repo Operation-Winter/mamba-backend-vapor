@@ -33,7 +33,7 @@ extension PlanningSystem {
             return
         }
         
-        let client = PlanningWebSocketClient(id: uuid, socket: webSocket, sessionId: session.id, type: .join, connected: true)
+        let client = PlanningWebSocketClient(id: uuid, socket: webSocket, sessionId: session.id.value, type: .join, connected: true)
         clients.add(client)
         
         let participant = PlanningParticipant(participantId: client.id,
@@ -44,12 +44,16 @@ extension PlanningSystem {
             .dropFirst()
             .sink { connected in
                 participant.connected = connected
-                session.sendStateToAll()
+                Task {
+                    await session.sendStateToAll()
+                }
             }
             .store(in: &subscriptions)
         
-        session.add(participant: participant)
-        session.sendStateToAll()
+        Task {
+            await session.add(participant: participant)
+            await session.sendStateToAll()
+        }
     }
     
     // MARK: Vote command
@@ -61,8 +65,11 @@ extension PlanningSystem {
             return
         }
         client.socket = webSocket
-        session.add(vote: message.selectedCard, uuid: uuid)
-        session.sendStateToAll()
+        
+        Task {
+            await session.add(vote: message.selectedCard, uuid: uuid)
+            await session.sendStateToAll()
+        }
     }
 
     // MARK: Vote command
@@ -74,9 +81,12 @@ extension PlanningSystem {
             return
         }
         client.socket = webSocket
-        session.remove(participantId: uuid)
-        clients.close(uuid)
-        session.sendStateToAll()
+        
+        Task {
+            await session.remove(participantId: uuid)
+            clients.close(uuid)
+            await session.sendStateToAll()
+        }
     }
     
     // MARK: Change name command
@@ -88,8 +98,11 @@ extension PlanningSystem {
             return
         }
         client.socket = webSocket
-        session.updateParticipant(participantId: uuid, name: message.name)
-        session.sendStateToAll()
+        
+        Task {
+            await session.updateParticipant(participantId: uuid, name: message.name)
+            await session.sendStateToAll()
+        }
     }
     
     // MARK: Reconnect command
