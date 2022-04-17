@@ -18,4 +18,5 @@ protocol PlanningSessionDelegate: AnyObject {
     func send(stateMessage: PlanningSessionStateMessage, state: PlanningSessionState, clientUuid: UUID)
     func sendInvalidCommand(error: PlanningInvalidCommandError, type: PlanningSystemType, clientUuid: UUID)
     func sendInvalidSessionCommand(error: PlanningInvalidSessionError, clientUuid: UUID)
+    func sessionHasTimedOut(sessionId: String)
 }

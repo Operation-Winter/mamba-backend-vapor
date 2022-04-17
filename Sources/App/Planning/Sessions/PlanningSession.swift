@@ -17,14 +17,24 @@ actor PlanningSession {
     }
     private(set) var name: String
     private(set) var availableCards: [PlanningCard]
-    private(set) var participants: [PlanningParticipant]
-    private(set) var ticket: PlanningTicket?
-    private(set) var state: PlanningSessionState
-    private(set) var previousTickets: [PlanningTicket]
+    private(set) var participants: [PlanningParticipant] {
+        didSet { resetIdleTimer() }
+    }
+    private(set) var ticket: PlanningTicket? {
+        didSet { resetIdleTimer() }
+    }
+    private(set) var state: PlanningSessionState {
+        didSet { resetIdleTimer() }
+    }
+    private(set) var previousTickets: [PlanningTicket] {
+        didSet { resetIdleTimer() }
+    }
     private(set) var autoCompleteVoting: Bool
     private(set) weak var delegate: PlanningSessionDelegate?
     private var timer: DispatchSourceTimer?
     private var timerTimeLeft: Int?
+    private var idleTimer: DispatchSourceTimer
+    private var idleTimerMinutesLeft = 60
     
     private var stateMessage: PlanningSessionStateMessage {
         PlanningSessionStateMessage(sessionCode: _id,
@@ -43,7 +53,7 @@ actor PlanningSession {
          ticket: PlanningTicket? = nil,
          state: PlanningSessionState = .none,
          delegate: PlanningSessionDelegate? = nil,
-         previousTickets: [PlanningTicket] = []) {
+         previousTickets: [PlanningTicket] = []) async {
         self._id = id
         self.id = CurrentValueSubject(_id)
         self.name = name
@@ -54,6 +64,33 @@ actor PlanningSession {
         self.state = state
         self.delegate = delegate
         self.previousTickets = previousTickets
+        idleTimer = DispatchSource.makeTimerSource()
+        configureIdleTimer()
+    }
+    
+    private func configureIdleTimer() {
+        idleTimer.schedule(deadline: .now(), repeating: .seconds(60))
+        idleTimer.setEventHandler() { [weak self] in
+            guard let self = self else { return }
+            Task {
+                await self.configureIdleTimeLeft(self.idleTimerMinutesLeft - 1)
+                
+                if await self.idleTimerMinutesLeft <= 0 {
+                    await self.idleTimer.cancel()
+                    await self.delegate?.sessionHasTimedOut(sessionId: self._id)
+                }
+            }
+        }
+    
+        idleTimer.activate()
+    }
+    
+    private func configureIdleTimeLeft(_ timeLeft: Int) {
+        idleTimerMinutesLeft = timeLeft
+    }
+    
+    private func resetIdleTimer() {
+        idleTimerMinutesLeft = 60
     }
     
     func sendState(to uuid: UUID) {
@@ -82,12 +119,16 @@ actor PlanningSession {
     func updateTicket(title: String, description: String) {
         ticket?.title = title
         ticket?.description = description
+        
+        resetIdleTimer()
     }
     
     func updateParticipant(participantId: UUID, name: String) {
         participants
             .first { $0.participantId == participantId }?
             .name = name
+        
+        resetIdleTimer()
     }
     
     func add(vote card: PlanningCard?, uuid: UUID) {
@@ -106,6 +147,7 @@ actor PlanningSession {
            ticket.ticketVotes.count == participants.count {
             state = .votingFinished
         }
+        resetIdleTimer()
     }
     
     func remove(participantId: UUID) {
@@ -145,10 +187,11 @@ actor PlanningSession {
                 await self.sendStateToAll()
                 
                 if await self.timerTimeLeft ?? 0 <= 0 {
-                    await self.timer?.suspend()
+                    await self.timer?.cancel()
                     await self.configureTimerTimeLeft(nil)
                     await self.finishVotes()
                     await self.sendStateToAll()
+                    await self.resetIdleTimer()
                 }
             }
         }
@@ -171,6 +214,7 @@ actor PlanningSession {
         timer.cancel()
         timerTimeLeft = nil
         sendStateToAll()
+        resetIdleTimer()
     }
     
     func sendPreviousTickets(uuid: UUID) {
@@ -183,5 +227,6 @@ actor PlanningSession {
         
         let message = PlanningPreviousTicketsMessage(previousTickets: previousTickets)
         delegate?.send(hostCommand: .previousTickets(message: message), clientUuid: uuid)
+        resetIdleTimer()
     }
 }

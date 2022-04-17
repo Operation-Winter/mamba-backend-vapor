@@ -156,4 +156,15 @@ extension PlanningSystem: PlanningSessionDelegate {
         guard let client = clients.find(clientUuid) else { return }
         sendInvalidSessionCommand(error: error, webSocket: client.socket)
     }
+    
+    func sessionHasTimedOut(sessionId: String) {
+        Task {
+            guard let session = await sessions.find(id: sessionId) else { return }
+            send(hostCommand: .sessionIdleTimeout, sessionId: sessionId)
+            send(joinCommand: .sessionIdleTimeout, sessionId: sessionId)
+            clients.close(sessionId: sessionId, type: .host)
+            clients.close(sessionId: sessionId, type: .join)
+            await sessions.remove(session)
+        }
+    }
 }

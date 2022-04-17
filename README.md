@@ -444,8 +444,18 @@ A command is sent in the following structure:
     }
   ]
 }</pre>
-    </td>
-  </tr>
+        </td>
+    </tr>
+    <tr>
+        <td>
+          <pre>SESSION_IDLE_TIMEOUT</pre>
+        </td>
+        <td>
+          Response that indicates that the session has timed out because it was idle.
+        </td>
+        <td>
+        </td>
+    </tr>
 </table>
 
 #### Planning Join
@@ -695,6 +705,16 @@ A command is sent in the following structure:
     </td>
     <td>
       None
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <pre>SESSION_IDLE_TIMEOUT</pre>
+    </td>
+    <td>
+      Response that indicates that the session has timed out because it was idle.
+    </td>
+    <td>
     </td>
   </tr>
 </table>
