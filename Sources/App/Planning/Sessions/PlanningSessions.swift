@@ -7,7 +7,7 @@
 
 import Foundation
 
-class PlanningSessions {
+actor PlanningSessions {
     private var storage: [String : PlanningSession]
     
     var count: Int {
