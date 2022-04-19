@@ -42,7 +42,11 @@ actor PlanningSession {
                                     availableCards: availableCards,
                                     participants: participants,
                                     ticket: ticket,
-                                    timeLeft: timerTimeLeft)
+                                    timeLeft: timerTimeLeft,
+                                    tags: [],
+                                    spectatorCount: 0,
+                                    coffeeRequestCount: 0,
+                                    coffeeVotes: nil)
     }
     
     init(id: String,

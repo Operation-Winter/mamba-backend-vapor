@@ -23,6 +23,10 @@ extension PlanningSystem {
             reconnectJoin(webSocket: webSocket, uuid: uuid)
         case .changeName(let uuid, let message):
             changeName(message: message, webSocket: webSocket, uuid: uuid)
+        case .requestCoffeeBreak(let uuid):
+            requestCoffeeBreak(webSocket: webSocket, uuid: uuid)
+        case .coffeeBreakVote(let uuid, let message):
+            coffeeBreakVote(message: message, webSocket: webSocket, uuid: uuid)
         }
     }
     
@@ -113,5 +117,35 @@ extension PlanningSystem {
         }
         client.socket = webSocket
         client.connected = true
+    }
+    
+    // MARK: Request coffee break command
+    func requestCoffeeBreak(webSocket: WebSocket, uuid: UUID) {
+        Task {
+            guard let client = clients.find(uuid),
+                  let session = await sessions.find(id: client.sessionId)
+            else {
+                sendInvalidCommand(error: .invalidUuid, type: .join, webSocket: webSocket)
+                return
+            }
+            client.socket = webSocket
+            
+            // TODO: Implement coffee break request logic
+        }
+    }
+    
+    // MARK: Coffee break vote command
+    func coffeeBreakVote(message: PlanningCoffeeBreakVoteMessage, webSocket: WebSocket, uuid: UUID) {
+        Task {
+            guard let client = clients.find(uuid),
+                  let session = await sessions.find(id: client.sessionId)
+            else {
+                sendInvalidCommand(error: .invalidUuid, type: .join, webSocket: webSocket)
+                return
+            }
+            client.socket = webSocket
+            
+            // TODO: Implement coffee break vote logic
+        }
     }
 }

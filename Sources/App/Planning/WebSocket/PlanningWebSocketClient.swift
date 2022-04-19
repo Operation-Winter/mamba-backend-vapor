@@ -8,7 +8,7 @@
 import Vapor
 import OpenCombine
 
-class PlanningWebSocketClient: WebSocketClient, OpenCombine.ObservableObject {
+class PlanningWebSocketClient: WebSocketClient {
     var id: UUID
     var socket: WebSocket {
         didSet {
