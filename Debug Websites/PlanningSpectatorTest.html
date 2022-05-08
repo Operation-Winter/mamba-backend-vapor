@@ -1,0 +1,154 @@
+<html>
+<head>
+    <style>
+        #messages {
+            text-align: left;
+            padding: 1em;
+            margin: 1em;
+            border: 1px solid black;
+        }
+    </style>
+    <title>Mamba Planning Spectator</title>
+</head>
+<body>
+<div class="container">
+    <h1>Mamba Planning Spectator</h1>
+    <div id="messages" class="messages"></div>
+
+    <table>
+        <tr>
+            <td>
+                <button id="joinCommand">Join Session Command</button>
+            </td>
+            <td>
+                <b>Session code: </b><input id="sessionCode" />
+            </td>
+            <td>
+                <b>Password: </b><input id="password" />
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <button id="leaveSessionCommand">Leave Session Command</button>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <button id="reconnectCommand">Reconnect</button>
+            </td>
+        </tr>
+    </table>
+
+    <div class="input-fields">
+        <p>Send custom command JSON:</p>
+        <textarea name="message" id="message" cols="100" rows="20"></textarea>
+        <button id="send">Send</button>≠
+    </div>
+</div>
+</body>
+<script>
+    const messageWindow = document.getElementById("messages");
+ 
+    const sendButton = document.getElementById("send");
+    const messageInput = document.getElementById("message");
+ 
+    var socket = createSocket();
+    const uuid = uuidv4()
+    
+    function uuidv4() {
+        return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c => (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
+    }
+                                                                    
+    function createSocket() {
+        var socket = new WebSocket("ws://localhost:8080/api/planning/spectator");
+        socket.onopen = function (event) {
+            addMessageToWindow("Connected");
+        };
+
+        socket.onmessage = function (event) {
+            let fileReader = new FileReader()
+
+            fileReader.onload = function (e) {
+                let command = new TextDecoder("utf8").decode(e.target.result);
+                addMessageToWindow(`<p style="background-color:lightcyan">Got Message: ${command}</p>`);
+            }
+            fileReader.readAsArrayBuffer(event.data);
+        };
+
+        socket.onclose = function (e) {
+            addMessageToWindow("Disconnected");
+        };
+
+        return socket;
+    }
+ 
+    sendButton.onclick = function (event) {
+        sendMessage(messageInput.value);
+        messageInput.value = "";
+    };
+ 
+    function sendMessage(message) {
+        socket.send(new TextEncoder().encode(message));
+        addMessageToWindow('<p style="background-color:lightcoral">Sent Message: ' + message + "</p>");
+    }
+ 
+    function addMessageToWindow(message) {
+        messageWindow.innerHTML += `<div>${message}</div>`
+    }
+
+    // Commands
+    class Command {
+        constructor(type, message) {
+            this.uuid = uuid
+            this.type = type
+            this.message = message
+        }
+    }
+
+    // Join session command
+    const joinSessionCommandButton = document.getElementById("joinCommand");
+    const sessionCodeInput = document.getElementById("sessionCode");
+    const passwordInput = document.getElementById("password");
+
+    joinSessionCommandButton.onclick = function (event) {
+        let command = JSON.stringify(joinSessionCommand(passwordInput.value, sessionCodeInput.value));
+        sendMessage(command);
+        sessionCodeInput.value = "";
+        passwordInput.value = "";
+    };
+
+    function joinSessionCommand(password, sessionCode) {
+        let message = {
+            password: password,
+            sessionCode: sessionCode
+        }
+        return new Command("JOIN_SESSION", message)
+    }
+
+    // Leave session command
+    const leaveSessionCommandButton = document.getElementById("leaveSessionCommand");
+
+    leaveSessionCommandButton.onclick = function (event) {
+        let command = JSON.stringify( {
+            uuid: uuid,
+            type: "LEAVE_SESSION"
+        });
+        sendMessage(command);
+    };
+
+    // Reconnect
+    const reconnectCommandButton = document.getElementById("reconnectCommand");
+    reconnectCommandButton.onclick = function (event) {
+        socket.close()
+        socket = createSocket();
+
+        setTimeout(function(){
+            let command = JSON.stringify({
+                uuid: uuid,
+                type: "RECONNECT"
+            });
+            sendMessage(command);
+        }, 200);
+    };
+</script>
+</html>

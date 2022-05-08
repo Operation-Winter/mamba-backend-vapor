@@ -11,4 +11,8 @@ func routes(_ app: Application) throws {
     app.webSocket(["api", "planning", "join"]) { request, webSocket in
         planningSystem.connect(webSocket, type: .join)
     }
+    
+    app.webSocket(["api", "planning", "spectator"]) { request, webSocket in
+        planningSystem.connect(webSocket, type: .spectator)
+    }
 }

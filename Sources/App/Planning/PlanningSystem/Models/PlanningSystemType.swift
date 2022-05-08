@@ -10,4 +10,5 @@ import Foundation
 enum PlanningSystemType {
     case host
     case join
+    case spectator
 }

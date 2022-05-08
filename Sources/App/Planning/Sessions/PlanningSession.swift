@@ -20,6 +20,9 @@ actor PlanningSession {
     private(set) var participants: [PlanningParticipant] {
         didSet { resetIdleTimer() }
     }
+    private(set) var spectators: [PlanningSpectator] {
+        didSet { resetIdleTimer() }
+    }
     private(set) var ticket: PlanningTicket? {
         didSet { resetIdleTimer() }
     }
@@ -44,7 +47,7 @@ actor PlanningSession {
                                     ticket: ticket,
                                     timeLeft: timerTimeLeft,
                                     tags: [],
-                                    spectatorCount: 0,
+                                    spectatorCount: spectators.count,
                                     coffeeRequestCount: 0,
                                     coffeeVotes: nil)
     }
@@ -54,6 +57,7 @@ actor PlanningSession {
          availableCards: [PlanningCard],
          autoCompleteVoting: Bool,
          participants: [PlanningParticipant] = [],
+         spectators: [PlanningSpectator] = [],
          ticket: PlanningTicket? = nil,
          state: PlanningSessionState = .none,
          delegate: PlanningSessionDelegate? = nil,
@@ -64,6 +68,7 @@ actor PlanningSession {
         self.autoCompleteVoting = autoCompleteVoting
         self.availableCards = availableCards.sorted { $0.sortOrder < $1.sortOrder }
         self.participants = participants
+        self.spectators = spectators
         self.ticket = ticket
         self.state = state
         self.delegate = delegate
@@ -108,6 +113,11 @@ actor PlanningSession {
     func add(participant: PlanningParticipant) {
         guard !participants.contains(where: { $0.participantId == participant.participantId }) else { return }
         participants.append(participant)
+    }
+    
+    func add(spectator: PlanningSpectator) {
+        guard !spectators.contains(where: { $0.spectatorId == spectator.spectatorId }) else { return }
+        spectators.append(spectator)
     }
     
     func add(ticket: PlanningTicket) {
@@ -157,6 +167,10 @@ actor PlanningSession {
     func remove(participantId: UUID) {
         ticket?.removeVotes(participantId: participantId)
         participants.removeAll { $0.participantId == participantId }
+    }
+    
+    func remove(spectatorId: UUID) {
+        spectators.removeAll { $0.spectatorId == spectatorId }
     }
     
     func resetVotes() {

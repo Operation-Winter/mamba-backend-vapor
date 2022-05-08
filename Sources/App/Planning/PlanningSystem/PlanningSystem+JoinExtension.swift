@@ -76,7 +76,7 @@ extension PlanningSystem {
         }
     }
 
-    // MARK: Vote command
+    // MARK: Leave session command
     func leaveSession(webSocket: WebSocket, uuid: UUID) {
         Task {
             guard let client = clients.find(uuid),

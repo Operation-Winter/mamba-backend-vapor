@@ -39,6 +39,12 @@ class PlanningSystem {
                 return
             }
             execute(command: command, webSocket: webSocket)
+        case .spectator:
+            guard let command = buffer.decodeWebSocketMessage(PlanningCommands.SpectatorServerReceive.self) else {
+                sendInvalidCommand(error: .doesntExist, type: .spectator, webSocket: webSocket)
+                return
+            }
+            execute(command: command, webSocket: webSocket)
         }
     }
     
@@ -53,6 +59,9 @@ class PlanningSystem {
         case .join:
             let command = PlanningCommands.JoinServerSend.invalidCommand(message: message)
             commandData = try? JSONEncoder().encode(command)
+        case .spectator:
+            let command = PlanningCommands.SpectatorServerSend.invalidCommand(message: message)
+            commandData = try? JSONEncoder().encode(command)
         }
         
         guard let data = commandData else { return }
@@ -61,6 +70,11 @@ class PlanningSystem {
     
     func sendInvalidSessionCommand(error: PlanningInvalidSessionError, webSocket: WebSocket) {
         guard let data = try? JSONEncoder().encode(PlanningCommands.JoinServerSend.invalidSession) else { return }
+        webSocket.send([UInt8](data))
+    }
+    
+    func sendInvalidSessionCommandSpectator(error: PlanningInvalidSessionError, webSocket: WebSocket) {
+        guard let data = try? JSONEncoder().encode(PlanningCommands.SpectatorServerSend.invalidSession) else { return }
         webSocket.send([UInt8](data))
     }
 }
@@ -98,17 +112,25 @@ extension PlanningSystem: PlanningSessionDelegate {
         send(command: command, clients: socketClients)
     }
     
+    func send(spectatorCommand command: PlanningCommands.SpectatorServerSend, sessionId: String) {
+        let socketClients = clients.find(sessionId: sessionId, type: .spectator)
+        send(command: command, clients: socketClients)
+    }
+    
     func send(stateMessage: PlanningSessionStateMessage, state: PlanningSessionState, sessionId: String) {
         switch state {
         case .none:
             send(hostCommand: .noneState(message: stateMessage), sessionId: sessionId)
             send(joinCommand: .noneState(message: stateMessage), sessionId: sessionId)
+            send(spectatorCommand: .noneState(message: stateMessage), sessionId: sessionId)
         case .voting:
             send(hostCommand: .votingState(message: stateMessage), sessionId: sessionId)
             send(joinCommand: .votingState(message: stateMessage), sessionId: sessionId)
+            send(spectatorCommand: .votingState(message: stateMessage), sessionId: sessionId)
         case .votingFinished:
             send(hostCommand: .finishedState(message: stateMessage), sessionId: sessionId)
             send(joinCommand: .finishedState(message: stateMessage), sessionId: sessionId)
+            send(spectatorCommand: .finishedState(message: stateMessage), sessionId: sessionId)
         }
     }
     
@@ -121,6 +143,9 @@ extension PlanningSystem: PlanningSessionDelegate {
             send(command: command, clientUuid: clientUuid)
         case .join:
             let command = makeJoinServerSendCommand(state: state, message: stateMessage)
+            send(command: command, clientUuid: clientUuid)
+        case .spectator:
+            let command = makeSpectatorServerSendCommand(state: state, message: stateMessage)
             send(command: command, clientUuid: clientUuid)
         }
     }
@@ -144,6 +169,17 @@ extension PlanningSystem: PlanningSessionDelegate {
             return PlanningCommands.JoinServerSend.votingState(message: message)
         case .votingFinished:
             return PlanningCommands.JoinServerSend.finishedState(message: message)
+        }
+    }
+    
+    private func makeSpectatorServerSendCommand(state: PlanningSessionState, message: PlanningSessionStateMessage) -> PlanningCommands.SpectatorServerSend {
+        switch state {
+        case .none:
+            return PlanningCommands.SpectatorServerSend.noneState(message: message)
+        case .voting:
+            return PlanningCommands.SpectatorServerSend.votingState(message: message)
+        case .votingFinished:
+            return PlanningCommands.SpectatorServerSend.finishedState(message: message)
         }
     }
     

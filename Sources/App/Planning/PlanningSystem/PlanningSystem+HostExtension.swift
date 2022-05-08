@@ -141,8 +141,10 @@ extension PlanningSystem {
             }
             client.socket = webSocket
             send(joinCommand: .endSession, sessionId: session.id.value)
+            send(spectatorCommand: .endSession, sessionId: session.id.value)
             clients.close(sessionId: session.id.value, type: .host)
             clients.close(sessionId: session.id.value, type: .join)
+            clients.close(sessionId: session.id.value, type: .spectator)
             await sessions.remove(session)
         }
     }
