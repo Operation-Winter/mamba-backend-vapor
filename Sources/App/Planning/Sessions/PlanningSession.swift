@@ -16,6 +16,7 @@ actor PlanningSession {
         didSet { id.value = _id }
     }
     private(set) var name: String
+    private let password: String?
     private(set) var availableCards: [PlanningCard]
     private(set) var participants: [PlanningParticipant] {
         didSet { resetIdleTimer() }
@@ -54,6 +55,7 @@ actor PlanningSession {
     
     init(id: String,
          name: String,
+         password: String?,
          availableCards: [PlanningCard],
          autoCompleteVoting: Bool,
          participants: [PlanningParticipant] = [],
@@ -65,6 +67,7 @@ actor PlanningSession {
         self._id = id
         self.id = CurrentValueSubject(_id)
         self.name = name
+        self.password = password
         self.autoCompleteVoting = autoCompleteVoting
         self.availableCards = availableCards.sorted { $0.sortOrder < $1.sortOrder }
         self.participants = participants

@@ -142,7 +142,10 @@ A command is sent in the following structure:
   "availableCards": [
     "ZERO", "ONE", "TWO", "THREE", "FIVE", "EIGHT", "THIRTEEN", "TWENTY", "FOURTY", "HUNDRED", "QUESTION", "COFFEE"
   ],
-  "autoCompleteVoting": true
+  "autoCompleteVoting": true,
+  "tags": ["iOS", "Android"],
+  "password": "Bacon", // optional
+
 }</pre>
     </td>
   </tr>
@@ -479,13 +482,14 @@ A command is sent in the following structure:
       <pre>JOIN_SESSION</pre>
     </td>
     <td>
-      Send session name and available cards
+      Join session with specified sessionCode, user name, and password.
     </td>
     <td>
       <pre lang="json">
 {
   "participantName":"Armand",
-  "sessionCode":"545544"
+  "sessionCode":"545544",
+  "password":"Bacon" //optional
 }</pre>
     </td>
   </tr>
@@ -719,6 +723,239 @@ A command is sent in the following structure:
   </tr>
 </table>
 
+#### Planning Spectate
+
+##### Client to server
+
+<table>
+  <tr>
+    <th>
+        Type
+    </th>
+    <th>
+        Description
+    </th>
+    <th>
+        Message
+    </th>
+  </tr>
+  <tr>
+    <td>
+      <pre>JOIN_SESSION</pre>
+    </td>
+    <td>
+      Send session code and password
+    </td>
+    <td>
+      <pre lang="json">
+{
+  "password":"Bacon",
+  "sessionCode":"545544"
+}</pre>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <pre>LEAVE_SESSION</pre>
+    </td>
+    <td>
+      Inform server client is disconnecting
+    </td>
+    <td>
+      None
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <pre>RECONNECT</pre>
+    </td>
+    <td>
+      Reconnect to existing session using a UUID
+    </td>
+    <td>
+      None
+    </td>
+  </tr>
+</table>
+
+##### Server to client
+
+<table>
+  <tr>
+    <th>
+        Type
+    </th>
+    <th>
+        Description
+    </th>
+    <th>
+        Message
+    </th>
+  </tr>
+  <tr>
+    <td>
+      <pre>NONE_STATE</pre>
+    </td>
+    <td>
+      State `NONE` command containing current state of session
+    </td>
+    <td>
+      <pre lang="json">
+{
+  "participants":[
+    {
+      "name":"Armand",
+      "participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9"
+    }
+  ],
+  "availableCards":[
+    "ZERO", "ONE", "TWO", "THREE", "FIVE", "EIGHT", "THIRTEEN", "TWENTY", "FOURTY", "HUNDRED", "QUESTION", "COFFEE"
+  ],
+  "sessionCode":"000000",
+  "sessionName":"Test"
+}</pre>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <pre>VOTING_STATE</pre>
+    </td>
+    <td>
+      State `VOTING` command containing current state of session
+    </td>
+    <td>
+      <pre lang="json">
+{
+  "participants":[
+    {
+      "name":"Armand",
+      "participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9"
+    },
+    {
+      "name":"Piet",
+      "participantId":"34ED510B-B21D-423E-83D0-B85747F4D515"
+    }
+  ],
+  "ticket":{
+    "title":"Test",
+    "ticketVotes":[
+      {
+        "participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9",
+        "selectedCard":"FIVE"
+      }
+    ],
+    "description":"Test"
+  },
+  "availableCards":[
+    "ZERO", "ONE", "TWO", "THREE", "FIVE", "EIGHT", "THIRTEEN", "TWENTY", "FOURTY", "HUNDRED", "QUESTION", "COFFEE"
+  ],
+  "sessionCode":"000000",
+  "sessionName":"Test"
+}</pre>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <pre>FINISHED_STATE</pre>
+    </td>
+    <td>
+      State `VOTING_FINISHED` command containing current state of session
+    </td>
+    <td>
+      <pre lang="json">
+{
+  "participants":[
+    {
+      "name":"Armand",
+      "participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9"
+    },
+    {
+      "name":"Piet",
+      "participantId":"34ED510B-B21D-423E-83D0-B85747F4D515"
+    }
+  ],
+  "ticket":{
+    "title":"Test",
+    "ticketVotes":[
+      {
+        "participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9",
+        "selectedCard":"FIVE"
+      },
+      {
+        "participantId":"34ED510B-B21D-423E-83D0-B85747F4D515",
+        "selectedCard":null //Indicates that this vote is skipped
+      }
+    ],
+    "description":"Test"
+  },
+  "availableCards":[
+    "ZERO", "ONE", "TWO", "THREE", "FIVE", "EIGHT", "THIRTEEN", "TWENTY", "FOURTY", "HUNDRED", "QUESTION", "COFFEE"
+  ],
+  "sessionCode":"000000",
+  "sessionName":"Test"
+}</pre>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <pre>INVALID_COMMAND</pre>
+    </td>
+    <td>
+      Inform client that command sent is invalid
+    </td>
+    <td>
+      <pre lang="json">
+{
+  "code":"0000",
+  "description":"No session code has been specified"
+}</pre>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <pre>INVALID_SESSION</pre>
+    </td>
+    <td>
+      Inform client that session is invalid
+    </td>
+    <td>
+      None
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <pre>REMOVE_PARTICIPANT</pre>
+    </td>
+    <td>
+      Inform client that they have been removed from the session
+    </td>
+    <td>
+      None
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <pre>END_SESSION</pre>
+    </td>
+    <td>
+      Inform client that session had been ended
+    </td>
+    <td>
+      None
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <pre>SESSION_IDLE_TIMEOUT</pre>
+    </td>
+    <td>
+      Response that indicates that the session has timed out because it was idle.
+    </td>
+    <td>
+    </td>
+  </tr>
+</table>
+
 ### Error codes
 
 #### Invalid Session
@@ -733,6 +970,9 @@ A command is sent in the following structure:
 - `0004`: Invalid identifier.
 - `0005`: Invalid parameters.
 - `0006`: Invalid state.
+
+#### Session timeout
+- `0007`: Session idle timeout
 
 ## Roadmap
 
