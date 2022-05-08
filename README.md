@@ -924,17 +924,6 @@ A command is sent in the following structure:
   </tr>
   <tr>
     <td>
-      <pre>REMOVE_PARTICIPANT</pre>
-    </td>
-    <td>
-      Inform client that they have been removed from the session
-    </td>
-    <td>
-      None
-    </td>
-  </tr>
-  <tr>
-    <td>
       <pre>END_SESSION</pre>
     </td>
     <td>
