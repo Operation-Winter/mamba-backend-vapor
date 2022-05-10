@@ -29,6 +29,9 @@
                     <b>Password: </b><input id="password" />
                 </td>
                 <td>
+                    <b>Tags: </b><input id="startTags" />
+                </td>
+                <td>
                     <b>Auto complete voting: </b><input type="checkbox" id="autoCompleteVoting" />
                 </td>
             </tr>
@@ -41,6 +44,9 @@
                 </td>
                 <td>
                     <b>Description: </b><input id="ticketDescription" />
+                </td>
+                <td>
+                    <b>Selected tags: </b><input id="addSelectedTags" />
                 </td>
             </tr>
             <tr>
@@ -88,6 +94,9 @@
                 </td>
                 <td>
                     <b>Description: </b><input id="editTicketDescription" />
+                </td>
+                <td>
+                    <b>Selected tags: </b><input id="editSelectedTags" />
                 </td>
             </tr>
             <tr>
@@ -179,12 +188,14 @@
     const sessionNameInput = document.getElementById("sessionName");
     const passwordInput = document.getElementById("password");
     const autoCompleteVotingInput = document.getElementById("autoCompleteVoting");
-    
+    const startTagsInput = document.getElementById("startTags");
+
     startSessionCommandButton.onclick = function (event) {
         let command = JSON.stringify(startSessionCommand(sessionNameInput.value, passwordInput.value, autoCompleteVotingInput.checked));
         sendMessage(command);
         sessionNameInput.value = "";
         passwordInput.value = "";
+        startTagsInput.value = "";
     };
 
     function startSessionCommand(sessionName, password, autoCompleteVoting) {
@@ -205,7 +216,7 @@
                 "QUESTION"
             ],
             autoCompleteVoting: autoCompleteVoting,
-            tags: []
+            tags: startTagsInput.value.split(',')
         }
         return new Command("START_SESSION", message)
     }
@@ -214,18 +225,21 @@
     const addTicketCommandButton = document.getElementById("addTicketCommand");
     const ticketTitle = document.getElementById("ticketTitle");
     const ticketDescription = document.getElementById("ticketDescription");
+    const addSelectedTags = document.getElementById("addSelectedTags");
 
     addTicketCommandButton.onclick = function (event) {
         let command = JSON.stringify(addTicketCommand(ticketTitle.value, ticketDescription.value));
         sendMessage(command);
         ticketTitle.value = "";
         ticketDescription.value = "";
+        addSelectedTags.value = "";
     };
 
     function addTicketCommand(title, description) {
         let message = {
             title: title,
-            description: description
+            description: description,
+            selectedTags: addSelectedTags.value.split(',')
         }
         return new Command("ADD_TICKET", message)
     }
@@ -313,18 +327,21 @@
     const editTicketCommandButton = document.getElementById("editTicketCommand");
     const editTicketTitle = document.getElementById("editTicketTitle");
     const editTicketDescription = document.getElementById("editTicketDescription");
+    const editSelectedTags = document.getElementById("editSelectedTags");
 
     editTicketCommandButton.onclick = function (event) {
         let command = JSON.stringify(editTicketCommand(editTicketTitle.value, editTicketDescription.value));
         sendMessage(command);
         editTicketTitle.value = "";
         editTicketDescription.value = "";
+        editSelectedTags.value = "";
     };
 
     function editTicketCommand(title, description) {
         let message = {
             title: title,
-            description: description
+            description: description,
+            selectedTags: editSelectedTags.value.split(',')
         }
         return new Command("EDIT_TICKET", message)
     }

@@ -37,6 +37,9 @@
             <td>
                 <b>Selected card: </b><input id="selectedCard" />
             </td>
+            <td>
+                <b>Selected tag: </b><input id="selectedTag" />
+            </td>
         </tr>
         <tr>
             <td>
@@ -150,16 +153,19 @@
     // Vote command
     const voteCommandButton = document.getElementById("voteCommand");
     const selectedCardInput = document.getElementById("selectedCard");
+    const selectedTagInput = document.getElementById("selectedTag");
 
     voteCommandButton.onclick = function (event) {
         let command = JSON.stringify(voteCommand(selectedCardInput.value));
         sendMessage(command);
         selectedCardInput.value = "";
+        selectedTagInput.value = "";
     };
 
     function voteCommand(selectedCard) {
         let message = {
-            selectedCard: selectedCard
+            selectedCard: selectedCard,
+            tag: selectedTagInput.value == "" ? null : selectedTagInput.value
         }
         return new Command("VOTE", message)
     }

@@ -60,7 +60,8 @@ extension PlanningSystem {
                                                 password: message.password,
                                                 availableCards: message.availableCards,
                                                 autoCompleteVoting: message.autoCompleteVoting,
-                                                delegate: self)
+                                                delegate: self,
+                                                tags: message.tags)
             
             clients.add(client)
             
@@ -92,7 +93,8 @@ extension PlanningSystem {
             }
             client.socket = webSocket
             let ticket = PlanningTicket(title: message.title,
-                                        description: message.description)
+                                        description: message.description,
+                                        selectedTags: message.selectedTags)
             
             await session.add(ticket: ticket)
             await session.sendStateToAll()
@@ -110,7 +112,7 @@ extension PlanningSystem {
             }
             client.socket = webSocket
             
-            await session.add(vote: nil, uuid: message.participantId)
+            await session.add(vote: nil, tag: nil, uuid: message.participantId)
             await session.sendStateToAll()
         }
     }
@@ -195,7 +197,7 @@ extension PlanningSystem {
             }
             client.socket = webSocket
             
-            await session.updateTicket(title: message.title, description: message.description)
+            await session.updateTicket(title: message.title, description: message.description, selectedTags: message.selectedTags)
             await session.sendStateToAll()
         }
     }

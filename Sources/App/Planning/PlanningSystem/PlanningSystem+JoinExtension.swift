@@ -73,7 +73,7 @@ extension PlanningSystem {
             }
             client.socket = webSocket
              
-            await session.add(vote: message.selectedCard, uuid: uuid)
+            await session.add(vote: message.selectedCard, tag: message.tag, uuid: uuid)
             await session.sendStateToAll()
         }
     }

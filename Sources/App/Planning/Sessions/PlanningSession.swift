@@ -38,6 +38,7 @@ actor PlanningSession {
     private var timerTimeLeft: Int?
     private var idleTimer: DispatchSourceTimer
     private var idleTimerMinutesLeft = 60
+    private var tags: Set<String>
     let password: String?
     
     private var stateMessage: PlanningSessionStateMessage {
@@ -47,7 +48,7 @@ actor PlanningSession {
                                     participants: participants,
                                     ticket: ticket,
                                     timeLeft: timerTimeLeft,
-                                    tags: [],
+                                    tags: tags,
                                     spectatorCount: spectators.count,
                                     coffeeRequestCount: 0,
                                     coffeeVotes: nil)
@@ -63,7 +64,8 @@ actor PlanningSession {
          ticket: PlanningTicket? = nil,
          state: PlanningSessionState = .none,
          delegate: PlanningSessionDelegate? = nil,
-         previousTickets: [PlanningTicket] = []) async {
+         previousTickets: [PlanningTicket] = [],
+         tags: Set<String> = []) async {
         self._id = id
         self.id = CurrentValueSubject(_id)
         self.name = name
@@ -76,6 +78,7 @@ actor PlanningSession {
         self.state = state
         self.delegate = delegate
         self.previousTickets = previousTickets
+        self.tags = tags
         idleTimer = DispatchSource.makeTimerSource()
         configureIdleTimer()
     }
@@ -133,9 +136,11 @@ actor PlanningSession {
         state = .voting
     }
     
-    func updateTicket(title: String, description: String) {
+    func updateTicket(title: String, description: String, selectedTags: Set<String>) {
         ticket?.title = title
         ticket?.description = description
+        ticket?.selectedTags = selectedTags
+        ticket?.removeVotesAll()
         
         resetIdleTimer()
     }
@@ -148,7 +153,7 @@ actor PlanningSession {
         resetIdleTimer()
     }
     
-    func add(vote card: PlanningCard?, uuid: UUID) {
+    func add(vote card: PlanningCard?, tag: String?, uuid: UUID) {
         guard state == .voting,
               let ticket = ticket,
               participants.contains(where: { $0.participantId == uuid })
@@ -157,7 +162,7 @@ actor PlanningSession {
             return
         }
         ticket.removeVotes(participantId: uuid)
-        let vote = PlanningTicketVote(participantId: uuid, selectedCard: card)
+        let vote = PlanningTicketVote(participantId: uuid, selectedCard: card, tag: tag)
         ticket.add(vote: vote)
         
         if autoCompleteVoting,
@@ -184,7 +189,7 @@ actor PlanningSession {
     func finishVotes() {
         participants.forEach { participant in
             if ticket?.ticketVotes.contains(where: { $0.participantId == participant.participantId }) == false {
-                add(vote: nil, uuid: participant.participantId)
+                add(vote: nil, tag: nil, uuid: participant.participantId)
             }
         }
         state = .votingFinished

@@ -8,7 +8,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/vapor/vapor.git", from: "4.57.0"),
-        .package(name: "mamba-networking", url: "https://github.com/Operation-Winter/mamba-networking.git", from: "1.11.0"),
+        .package(name: "mamba-networking", url: "https://github.com/Operation-Winter/mamba-networking.git", from: "1.12.0"),
         .package(url: "https://github.com/OpenCombine/OpenCombine.git", from: "0.13.0")
     ], targets: [
         .target(
