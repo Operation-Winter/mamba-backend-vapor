@@ -949,7 +949,7 @@ A command is sent in the following structure:
 
 #### Invalid Session
 
-- `0001`: The specified session code doesn't exist or is no longer available.
+- `0001`: The specified session code doesn't exist or the password provided is invalid.
 
 #### Invalid Command
 

@@ -16,7 +16,6 @@ actor PlanningSession {
         didSet { id.value = _id }
     }
     private(set) var name: String
-    private let password: String?
     private(set) var availableCards: [PlanningCard]
     private(set) var participants: [PlanningParticipant] {
         didSet { resetIdleTimer() }
@@ -39,6 +38,7 @@ actor PlanningSession {
     private var timerTimeLeft: Int?
     private var idleTimer: DispatchSourceTimer
     private var idleTimerMinutesLeft = 60
+    let password: String?
     
     private var stateMessage: PlanningSessionStateMessage {
         PlanningSessionStateMessage(sessionCode: _id,

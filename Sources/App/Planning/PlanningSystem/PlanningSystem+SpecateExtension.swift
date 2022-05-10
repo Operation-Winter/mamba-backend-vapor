@@ -18,7 +18,9 @@ extension PlanningSystem {
     // MARK: Join spectate session command
     func joinSpectateSession(message: PlanningSpectateSessionMessage, webSocket: WebSocket, uuid: UUID) {
         Task {
-            guard let session = await sessions.find(id: message.sessionCode) else {
+            guard let session = await sessions.find(id: message.sessionCode),
+                  session.password == message.password
+            else {
                 sendInvalidSessionCommandSpectator(error: .doesntExist, webSocket: webSocket)
                 return
             }

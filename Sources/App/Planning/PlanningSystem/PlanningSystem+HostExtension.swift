@@ -57,6 +57,7 @@ extension PlanningSystem {
             
             let session = await PlanningSession(id: sessionId,
                                                 name: message.sessionName,
+                                                password: message.password,
                                                 availableCards: message.availableCards,
                                                 autoCompleteVoting: message.autoCompleteVoting,
                                                 delegate: self)

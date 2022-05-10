@@ -26,6 +26,9 @@
             <td>
                 <b>Session code: </b><input id="sessionCode" />
             </td>
+            <td>
+                <b>Password: </b><input id="password" />
+            </td>
         </tr>
         <tr>
             <td>
@@ -125,18 +128,21 @@
     const joinSessionCommandButton = document.getElementById("joinCommand");
     const sessionCodeInput = document.getElementById("sessionCode");
     const participantNameInput = document.getElementById("participantName");
+    const passwordInput = document.getElementById("password");
 
     joinSessionCommandButton.onclick = function (event) {
-        let command = JSON.stringify(joinSessionCommand(participantNameInput.value, sessionCodeInput.value));
+        let command = JSON.stringify(joinSessionCommand(participantNameInput.value, sessionCodeInput.value, passwordInput.value));
         sendMessage(command);
         sessionCodeInput.value = "";
         participantNameInput.value = "";
+        passwordInput.value = "";
     };
 
-    function joinSessionCommand(participantName, sessionCode) {
+    function joinSessionCommand(participantName, sessionCode, password) {
         let message = {
             participantName: participantName,
-            sessionCode: sessionCode
+            sessionCode: sessionCode,
+            password: password
         }
         return new Command("JOIN_SESSION", message)
     }

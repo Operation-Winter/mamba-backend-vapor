@@ -18,7 +18,7 @@ enum PlanningInvalidSessionError {
     
     var description: String {
         switch self {
-        case .doesntExist: return "The specified session code doesn't exist or is no longer available."
+        case .doesntExist: return "The specified session code doesn't exist or the password provided is invalid."
         }
     }
 }

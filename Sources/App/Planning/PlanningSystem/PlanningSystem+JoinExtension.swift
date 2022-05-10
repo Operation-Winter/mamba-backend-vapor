@@ -33,7 +33,9 @@ extension PlanningSystem {
     // MARK: Join session command
     func joinSession(message: PlanningJoinSessionMessage, webSocket: WebSocket, uuid: UUID) {
         Task {
-            guard let session = await sessions.find(id: message.sessionCode) else {
+            guard let session = await sessions.find(id: message.sessionCode),
+                  session.password == message.password
+            else {
                 sendInvalidSessionCommand(error: .doesntExist, webSocket: webSocket)
                 return
             }
