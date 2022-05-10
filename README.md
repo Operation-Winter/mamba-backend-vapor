@@ -160,7 +160,8 @@ A command is sent in the following structure:
       <pre lang="json">
 { 
   "title": "DM-10000", 
-  "description": "Blah blah"
+  "description": "Blah blah",
+  "selectedTags":["iOS", "Android"]
 }</pre>
     </td>
   </tr>
@@ -247,7 +248,8 @@ A command is sent in the following structure:
       <pre lang="json">
 { 
   "title": "DM-10000", 
-  "description": "Blah blah"
+  "description": "Blah blah",
+  "selectedTags":["iOS", "Android"]
 }</pre>
     </td>
   </tr>
@@ -353,7 +355,8 @@ A command is sent in the following structure:
     "ticketVotes":[
       {
         "participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9",
-        "selectedCard":"FIVE"
+        "selectedCard":"FIVE",
+        "tag":"iOS"
       }
     ],
     "description":"Test"
@@ -392,10 +395,12 @@ A command is sent in the following structure:
       {
         "participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9",
         "selectedCard":"FIVE"
+        "tag":"iOS"
       },
       {
         "participantId":"34ED510B-B21D-423E-83D0-B85747F4D515",
-        "selectedCard":null //Indicates that this vote is skipped
+        "selectedCard":null, //Indicates that this vote is skipped
+        "tag":null
       }
     ],
     "description":"Test"
@@ -440,7 +445,8 @@ A command is sent in the following structure:
       "ticketVotes":[
         {
           "participantId":"D520EFDD-C4BD-450B-9531-30E404B77D0F",
-          "selectedCard":"FIVE"
+          "selectedCard":"FIVE",
+          "tag":"iOS"
           }
         ],
       "description":""
@@ -503,7 +509,8 @@ A command is sent in the following structure:
     <td>
       <pre lang="json">
 {
-  "selectedCard":"ONE"
+  "selectedCard":"ONE",
+  "tag":"iOS"
 }</pre>
     </td>
   </tr>
@@ -608,7 +615,8 @@ A command is sent in the following structure:
     "ticketVotes":[
       {
         "participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9",
-        "selectedCard":"FIVE"
+        "selectedCard":"FIVE",
+        "tag":"iOS"
       }
     ],
     "description":"Test"
@@ -646,11 +654,13 @@ A command is sent in the following structure:
     "ticketVotes":[
       {
         "participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9",
-        "selectedCard":"FIVE"
+        "selectedCard":"FIVE",
+        "tag":"iOS"
       },
       {
         "participantId":"34ED510B-B21D-423E-83D0-B85747F4D515",
-        "selectedCard":null //Indicates that this vote is skipped
+        "selectedCard":null, //Indicates that this vote is skipped
+        "tag": null
       }
     ],
     "description":"Test"
@@ -841,7 +851,8 @@ A command is sent in the following structure:
     "ticketVotes":[
       {
         "participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9",
-        "selectedCard":"FIVE"
+        "selectedCard":"FIVE",
+        "tag":"iOS"
       }
     ],
     "description":"Test"
@@ -879,11 +890,13 @@ A command is sent in the following structure:
     "ticketVotes":[
       {
         "participantId":"852ACB12-4B40-4BC2-B72B-17057A1A5AE9",
-        "selectedCard":"FIVE"
+        "selectedCard":"FIVE",
+        "tag":"iOS"
       },
       {
         "participantId":"34ED510B-B21D-423E-83D0-B85747F4D515",
-        "selectedCard":null //Indicates that this vote is skipped
+        "selectedCard":null, //Indicates that this vote is skipped
+        "tag":null
       }
     ],
     "description":"Test"
