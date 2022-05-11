@@ -199,9 +199,10 @@
     };
 
     function startSessionCommand(sessionName, password, autoCompleteVoting) {
+        let nullSafePassword = password == "" ? null : password;
         let message = {
             sessionName: sessionName,
-            password: password,
+            password: nullSafePassword,
             availableCards: [
                 "ZERO",
                 "ONE",

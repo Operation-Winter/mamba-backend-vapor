@@ -142,10 +142,11 @@
     };
 
     function joinSessionCommand(participantName, sessionCode, password) {
+        let nullSafePassword = password == "" ? null : password;
         let message = {
             participantName: participantName,
             sessionCode: sessionCode,
-            password: password
+            password: nullSafePassword
         }
         return new Command("JOIN_SESSION", message)
     }
