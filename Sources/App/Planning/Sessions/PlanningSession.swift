@@ -38,17 +38,16 @@ actor PlanningSession {
     private var timerTimeLeft: Int?
     private var idleTimer: DispatchSourceTimer
     private var idleTimerMinutesLeft = 60
-    private var tags: Set<String>
     let password: String?
     
     private var stateMessage: PlanningSessionStateMessage {
         PlanningSessionStateMessage(sessionCode: _id,
                                     sessionName: name,
+                                    password: password,
                                     availableCards: availableCards,
                                     participants: participants,
                                     ticket: ticket,
                                     timeLeft: timerTimeLeft,
-                                    tags: tags,
                                     spectatorCount: spectators.count,
                                     coffeeRequestCount: 0,
                                     coffeeVotes: nil)
@@ -64,8 +63,7 @@ actor PlanningSession {
          ticket: PlanningTicket? = nil,
          state: PlanningSessionState = .none,
          delegate: PlanningSessionDelegate? = nil,
-         previousTickets: [PlanningTicket] = [],
-         tags: Set<String> = []) async {
+         previousTickets: [PlanningTicket] = []) async {
         self._id = id
         self.id = CurrentValueSubject(_id)
         self.name = name
@@ -78,7 +76,6 @@ actor PlanningSession {
         self.state = state
         self.delegate = delegate
         self.previousTickets = previousTickets
-        self.tags = tags
         idleTimer = DispatchSource.makeTimerSource()
         configureIdleTimer()
     }

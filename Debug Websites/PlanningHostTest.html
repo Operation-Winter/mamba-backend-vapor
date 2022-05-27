@@ -29,9 +29,6 @@
                     <b>Password: </b><input id="password" />
                 </td>
                 <td>
-                    <b>Tags: </b><input id="startTags" />
-                </td>
-                <td>
                     <b>Auto complete voting: </b><input type="checkbox" id="autoCompleteVoting" />
                 </td>
             </tr>
@@ -188,14 +185,12 @@
     const sessionNameInput = document.getElementById("sessionName");
     const passwordInput = document.getElementById("password");
     const autoCompleteVotingInput = document.getElementById("autoCompleteVoting");
-    const startTagsInput = document.getElementById("startTags");
 
     startSessionCommandButton.onclick = function (event) {
         let command = JSON.stringify(startSessionCommand(sessionNameInput.value, passwordInput.value, autoCompleteVotingInput.checked));
         sendMessage(command);
         sessionNameInput.value = "";
         passwordInput.value = "";
-        startTagsInput.value = "";
     };
 
     function startSessionCommand(sessionName, password, autoCompleteVoting) {
@@ -216,8 +211,7 @@
                 "HUNDRED",
                 "QUESTION"
             ],
-            autoCompleteVoting: autoCompleteVoting,
-            tags: startTagsInput.value.split(',')
+            autoCompleteVoting: autoCompleteVoting
         }
         return new Command("START_SESSION", message)
     }

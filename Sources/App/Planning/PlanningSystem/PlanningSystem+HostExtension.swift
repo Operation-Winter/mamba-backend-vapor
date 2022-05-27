@@ -60,8 +60,7 @@ extension PlanningSystem {
                                                 password: message.password,
                                                 availableCards: message.availableCards,
                                                 autoCompleteVoting: message.autoCompleteVoting,
-                                                delegate: self,
-                                                tags: message.tags)
+                                                delegate: self)
             
             clients.add(client)
             
