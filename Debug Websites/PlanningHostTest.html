@@ -231,10 +231,12 @@
     };
 
     function addTicketCommand(title, description) {
+        let tagsValue = addSelectedTags.value;
+        let tags = tagsValue == "" ? [] : tagsValue.split(',');
         let message = {
             title: title,
             description: description,
-            selectedTags: addSelectedTags.value.split(',')
+            selectedTags: tags,
         }
         return new Command("ADD_TICKET", message)
     }
@@ -333,10 +335,12 @@
     };
 
     function editTicketCommand(title, description) {
+        let tagsValue = editSelectedTags.value;
+        let tags = tagsValue == "" ? [] : tagsValue.split(',');
         let message = {
             title: title,
             description: description,
-            selectedTags: editSelectedTags.value.split(',')
+            selectedTags: tags
         }
         return new Command("EDIT_TICKET", message)
     }
