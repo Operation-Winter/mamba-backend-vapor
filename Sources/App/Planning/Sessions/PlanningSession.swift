@@ -38,6 +38,7 @@ actor PlanningSession {
     private var timerTimeLeft: Int?
     private var idleTimer: DispatchSourceTimer
     private var idleTimerMinutesLeft = 60
+    private var coffeeRequestCount: Set<UUID> = []
     let password: String?
     
     private var stateMessage: PlanningSessionStateMessage {
@@ -49,7 +50,7 @@ actor PlanningSession {
                                     ticket: ticket,
                                     timeLeft: timerTimeLeft,
                                     spectatorCount: spectators.count,
-                                    coffeeRequestCount: 0,
+                                    coffeeRequestCount: coffeeRequestCount.count,
                                     coffeeVotes: nil)
     }
     
@@ -169,6 +170,15 @@ actor PlanningSession {
         resetIdleTimer()
     }
     
+    func toggleCoffeeRequestVote(participantId: UUID) {
+        if coffeeRequestCount.contains(participantId) {
+            coffeeRequestCount.remove(participantId)
+        } else {
+            coffeeRequestCount.insert(participantId)
+        }
+        sendStateToAll()
+    }
+
     func remove(participantId: UUID) {
         ticket?.removeVotes(participantId: participantId)
         participants.removeAll { $0.participantId == participantId }

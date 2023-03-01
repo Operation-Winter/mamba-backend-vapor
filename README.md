@@ -140,7 +140,7 @@ A command is sent in the following structure:
 { 
   "sessionName": "Example session", 
   "availableCards": [
-    "ZERO", "ONE", "TWO", "THREE", "FIVE", "EIGHT", "THIRTEEN", "TWENTY", "FOURTY", "HUNDRED", "QUESTION", "COFFEE"
+    "ZERO", "ONE", "TWO", "THREE", "FIVE", "EIGHT", "THIRTEEN", "TWENTY", "FOURTY", "HUNDRED", "QUESTION"
   ],
   "autoCompleteVoting": true,
   "tags": ["iOS", "Android"],
@@ -290,6 +290,17 @@ A command is sent in the following structure:
       None
     </td>
   </tr>
+  <tr>
+    <td>
+      <pre>REQUEST_COFFEE_BREAK</pre>
+    </td>
+    <td>
+      Request coffee break break.
+    </td>
+    <td>
+      None
+    </td>
+  </tr>
 </table>
 
 ##### Server to client
@@ -323,7 +334,7 @@ A command is sent in the following structure:
     }
   ],
   "availableCards":[
-    "ZERO", "ONE", "TWO", "THREE", "FIVE", "EIGHT", "THIRTEEN", "TWENTY", "FOURTY", "HUNDRED", "QUESTION", "COFFEE"
+    "ZERO", "ONE", "TWO", "THREE", "FIVE", "EIGHT", "THIRTEEN", "TWENTY", "FOURTY", "HUNDRED", "QUESTION"
   ],
   "sessionCode":"000000",
   "sessionName":"Test"
@@ -362,7 +373,7 @@ A command is sent in the following structure:
     "description":"Test"
   },
   "availableCards":[
-    "ZERO", "ONE", "TWO", "THREE", "FIVE", "EIGHT", "THIRTEEN", "TWENTY", "FOURTY", "HUNDRED", "QUESTION", "COFFEE"
+    "ZERO", "ONE", "TWO", "THREE", "FIVE", "EIGHT", "THIRTEEN", "TWENTY", "FOURTY", "HUNDRED", "QUESTION"
   ],
   "sessionCode":"000000",
   "sessionName":"Test"
@@ -406,7 +417,7 @@ A command is sent in the following structure:
     "description":"Test"
   },
   "availableCards":[
-    "ZERO", "ONE", "TWO", "THREE", "FIVE", "EIGHT", "THIRTEEN", "TWENTY", "FOURTY", "HUNDRED", "QUESTION", "COFFEE"
+    "ZERO", "ONE", "TWO", "THREE", "FIVE", "EIGHT", "THIRTEEN", "TWENTY", "FOURTY", "HUNDRED", "QUESTION"
   ],
   "sessionCode":"000000",
   "sessionName":"Test"
@@ -550,6 +561,17 @@ A command is sent in the following structure:
 }</pre>
     </td>
   </tr>
+  <tr>
+    <td>
+      <pre>REQUEST_COFFEE_BREAK</pre>
+    </td>
+    <td>
+      Request coffee break break.
+    </td>
+    <td>
+      None
+    </td>
+  </tr>
 </table>
 
 ##### Server to client
@@ -583,7 +605,7 @@ A command is sent in the following structure:
     }
   ],
   "availableCards":[
-    "ZERO", "ONE", "TWO", "THREE", "FIVE", "EIGHT", "THIRTEEN", "TWENTY", "FOURTY", "HUNDRED", "QUESTION", "COFFEE"
+    "ZERO", "ONE", "TWO", "THREE", "FIVE", "EIGHT", "THIRTEEN", "TWENTY", "FOURTY", "HUNDRED", "QUESTION"
   ],
   "sessionCode":"000000",
   "sessionName":"Test"
@@ -622,7 +644,7 @@ A command is sent in the following structure:
     "description":"Test"
   },
   "availableCards":[
-    "ZERO", "ONE", "TWO", "THREE", "FIVE", "EIGHT", "THIRTEEN", "TWENTY", "FOURTY", "HUNDRED", "QUESTION", "COFFEE"
+    "ZERO", "ONE", "TWO", "THREE", "FIVE", "EIGHT", "THIRTEEN", "TWENTY", "FOURTY", "HUNDRED", "QUESTION"
   ],
   "sessionCode":"000000",
   "sessionName":"Test"
@@ -666,7 +688,7 @@ A command is sent in the following structure:
     "description":"Test"
   },
   "availableCards":[
-    "ZERO", "ONE", "TWO", "THREE", "FIVE", "EIGHT", "THIRTEEN", "TWENTY", "FOURTY", "HUNDRED", "QUESTION", "COFFEE"
+    "ZERO", "ONE", "TWO", "THREE", "FIVE", "EIGHT", "THIRTEEN", "TWENTY", "FOURTY", "HUNDRED", "QUESTION"
   ],
   "sessionCode":"000000",
   "sessionName":"Test"
@@ -819,7 +841,7 @@ A command is sent in the following structure:
     }
   ],
   "availableCards":[
-    "ZERO", "ONE", "TWO", "THREE", "FIVE", "EIGHT", "THIRTEEN", "TWENTY", "FOURTY", "HUNDRED", "QUESTION", "COFFEE"
+    "ZERO", "ONE", "TWO", "THREE", "FIVE", "EIGHT", "THIRTEEN", "TWENTY", "FOURTY", "HUNDRED", "QUESTION"
   ],
   "sessionCode":"000000",
   "sessionName":"Test"
@@ -858,7 +880,7 @@ A command is sent in the following structure:
     "description":"Test"
   },
   "availableCards":[
-    "ZERO", "ONE", "TWO", "THREE", "FIVE", "EIGHT", "THIRTEEN", "TWENTY", "FOURTY", "HUNDRED", "QUESTION", "COFFEE"
+    "ZERO", "ONE", "TWO", "THREE", "FIVE", "EIGHT", "THIRTEEN", "TWENTY", "FOURTY", "HUNDRED", "QUESTION"
   ],
   "sessionCode":"000000",
   "sessionName":"Test"
@@ -902,7 +924,7 @@ A command is sent in the following structure:
     "description":"Test"
   },
   "availableCards":[
-    "ZERO", "ONE", "TWO", "THREE", "FIVE", "EIGHT", "THIRTEEN", "TWENTY", "FOURTY", "HUNDRED", "QUESTION", "COFFEE"
+    "ZERO", "ONE", "TWO", "THREE", "FIVE", "EIGHT", "THIRTEEN", "TWENTY", "FOURTY", "HUNDRED", "QUESTION"
   ],
   "sessionCode":"000000",
   "sessionName":"Test"

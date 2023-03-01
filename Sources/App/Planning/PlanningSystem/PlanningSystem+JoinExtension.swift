@@ -131,8 +131,7 @@ extension PlanningSystem {
                 return
             }
             client.socket = webSocket
-            
-            // TODO: Implement coffee break request logic
+            await session.toggleCoffeeRequestVote(participantId: client.id)
         }
     }
     
