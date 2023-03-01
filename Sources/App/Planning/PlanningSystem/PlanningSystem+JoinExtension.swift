@@ -132,6 +132,7 @@ extension PlanningSystem {
             }
             client.socket = webSocket
             await session.toggleCoffeeRequestVote(participantId: client.id)
+            await session.sendStateToAll()
         }
     }
     
@@ -145,8 +146,8 @@ extension PlanningSystem {
                 return
             }
             client.socket = webSocket
-            
-            // TODO: Implement coffee break vote logic
+            await session.add(coffeBreakVote: message.vote, uuid: uuid)
+            await session.sendStateToAll()
         }
     }
 }

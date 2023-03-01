@@ -33,8 +33,8 @@
         "repositoryURL": "https://github.com/Operation-Winter/mamba-networking.git",
         "state": {
           "branch": null,
-          "revision": "e9b26711f4b3208de91a0f35cd5bb2828b232892",
-          "version": "1.13.0"
+          "revision": "cadbbf3411080a0b8f1705f57cec00bceb23be7e",
+          "version": "1.16.0"
         }
       },
       {

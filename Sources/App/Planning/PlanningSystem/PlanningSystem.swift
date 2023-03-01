@@ -117,7 +117,9 @@ extension PlanningSystem: PlanningSessionDelegate {
         send(command: command, clients: socketClients)
     }
     
-    func send(stateMessage: PlanningSessionStateMessage, state: PlanningSessionState, sessionId: String) {
+    func send(stateMessage: PlanningSessionStateMessage,
+              state: PlanningSessionState,
+              sessionId: String) {
         switch state {
         case .none:
             send(hostCommand: .noneState(message: stateMessage), sessionId: sessionId)
@@ -131,6 +133,14 @@ extension PlanningSystem: PlanningSessionDelegate {
             send(hostCommand: .finishedState(message: stateMessage), sessionId: sessionId)
             send(joinCommand: .finishedState(message: stateMessage), sessionId: sessionId)
             send(spectatorCommand: .finishedState(message: stateMessage), sessionId: sessionId)
+        case .coffeeBreakVoting:
+            send(hostCommand: .coffeeVoting(message: stateMessage), sessionId: sessionId)
+            send(joinCommand: .coffeeVoting(message: stateMessage), sessionId: sessionId)
+            send(spectatorCommand: .coffeeVoting(message: stateMessage), sessionId: sessionId)
+        case .coffeeBreakVotingFinished:
+            send(hostCommand: .coffeeVotingFinished(message: stateMessage), sessionId: sessionId)
+            send(joinCommand: .coffeeVotingFinished(message: stateMessage), sessionId: sessionId)
+            send(spectatorCommand: .coffeeVotingFinished(message: stateMessage), sessionId: sessionId)
         }
     }
     
@@ -158,6 +168,10 @@ extension PlanningSystem: PlanningSessionDelegate {
             return PlanningCommands.HostServerSend.votingState(message: message)
         case .votingFinished:
             return PlanningCommands.HostServerSend.finishedState(message: message)
+        case .coffeeBreakVoting:
+            return PlanningCommands.HostServerSend.coffeeVoting(message: message)
+        case .coffeeBreakVotingFinished:
+            return PlanningCommands.HostServerSend.coffeeVotingFinished(message: message)
         }
     }
     
@@ -169,6 +183,10 @@ extension PlanningSystem: PlanningSessionDelegate {
             return PlanningCommands.JoinServerSend.votingState(message: message)
         case .votingFinished:
             return PlanningCommands.JoinServerSend.finishedState(message: message)
+        case .coffeeBreakVoting:
+            return PlanningCommands.JoinServerSend.coffeeVoting(message: message)
+        case .coffeeBreakVotingFinished:
+            return PlanningCommands.JoinServerSend.coffeeVotingFinished(message: message)
         }
     }
     
@@ -180,6 +198,10 @@ extension PlanningSystem: PlanningSessionDelegate {
             return PlanningCommands.SpectatorServerSend.votingState(message: message)
         case .votingFinished:
             return PlanningCommands.SpectatorServerSend.finishedState(message: message)
+        case .coffeeBreakVoting:
+            return PlanningCommands.SpectatorServerSend.coffeeVoting(message: message)
+        case .coffeeBreakVotingFinished:
+            return PlanningCommands.SpectatorServerSend.coffeeVotingFinished(message: message)
         }
     }
     

@@ -43,6 +43,10 @@ extension PlanningSystem {
             startCoffeeBreakVote(webSocket: webSocket, uuid: uuid)
         case .endCoffeeBreakVote(let uuid):
             endCoffeeBreakVote(webSocket: webSocket, uuid: uuid)
+        case .coffeeBreakVote(uuid: let uuid, message: let message):
+            hostCoffeeBreakVote(message: message, webSocket: webSocket, uuid: uuid)
+        case .finishCoffeeBreakVote(uuid: let uuid):
+            finishCoffeeBreakVote(webSocket: webSocket, uuid: uuid)
         }
     }
 
@@ -272,6 +276,7 @@ extension PlanningSystem {
             }
             client.socket = webSocket
             await session.toggleCoffeeRequestVote(participantId: uuid)
+            await session.sendStateToAll()
         }
     }
     
@@ -285,12 +290,27 @@ extension PlanningSystem {
                 return
             }
             client.socket = webSocket
-            
-            // TODO: Implement start coffee break vote logic
+            await session.startCoffeeVoting()
+            await session.sendStateToAll()
         }
     }
     
-    // MARK: Start coffee break vote command
+    // MARK: Finish coffee break vote command
+    func finishCoffeeBreakVote(webSocket: WebSocket, uuid: UUID) {
+        Task {
+            guard let client = clients.find(uuid),
+                  let session = await sessions.find(id: client.sessionId)
+            else {
+                sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
+                return
+            }
+            client.socket = webSocket
+            await session.finishCoffeeVoting()
+            await session.sendStateToAll()
+        }
+    }
+    
+    // MARK: End coffee break vote command
     func endCoffeeBreakVote(webSocket: WebSocket, uuid: UUID) {
         Task {
             guard let client = clients.find(uuid),
@@ -300,8 +320,23 @@ extension PlanningSystem {
                 return
             }
             client.socket = webSocket
-            
-            // TODO: Implement end coffee break vote logic
+            await session.endCoffeeVoting()
+            await session.sendStateToAll()
+        }
+    }
+    
+    // MARK: Host coffee vote command
+    func hostCoffeeBreakVote(message: PlanningCoffeeBreakVoteMessage, webSocket: WebSocket, uuid: UUID) {
+        Task {
+            guard let client = clients.find(uuid),
+                  let session = await sessions.find(id: client.sessionId)
+            else {
+                sendInvalidCommand(error: .invalidUuid, type: .join, webSocket: webSocket)
+                return
+            }
+            client.socket = webSocket
+            await session.add(coffeBreakVote: message.vote, uuid: uuid)
+            await session.sendStateToAll()
         }
     }
 }

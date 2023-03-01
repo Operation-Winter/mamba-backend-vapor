@@ -39,6 +39,12 @@ actor PlanningSession {
     private var idleTimer: DispatchSourceTimer
     private var idleTimerMinutesLeft = 60
     private var coffeeRequestCount: Set<UUID> = []
+    private var coffeeVotes: [PlanningCoffeeVote] {
+        didSet { resetIdleTimer() }
+    }
+    private var previousState: PlanningSessionState? {
+        didSet { resetIdleTimer() }
+    }
     let password: String?
     
     private var stateMessage: PlanningSessionStateMessage {
@@ -64,7 +70,8 @@ actor PlanningSession {
          ticket: PlanningTicket? = nil,
          state: PlanningSessionState = .none,
          delegate: PlanningSessionDelegate? = nil,
-         previousTickets: [PlanningTicket] = []) async {
+         previousTickets: [PlanningTicket] = [],
+         coffeeVotes: [PlanningCoffeeVote] = []) async {
         self._id = id
         self.id = CurrentValueSubject(_id)
         self.name = name
@@ -77,6 +84,7 @@ actor PlanningSession {
         self.state = state
         self.delegate = delegate
         self.previousTickets = previousTickets
+        self.coffeeVotes = coffeeVotes
         idleTimer = DispatchSource.makeTimerSource()
         configureIdleTimer()
     }
@@ -170,13 +178,27 @@ actor PlanningSession {
         resetIdleTimer()
     }
     
+    func add(coffeBreakVote vote: Bool, uuid: UUID) {
+        guard state == .coffeeBreakVoting else {
+            delegate?.sendInvalidCommand(error: .invalidParameters, type: .join, clientUuid: uuid)
+            return
+        }
+        coffeeVotes.removeAll { $0.participantId == uuid }
+        let coffeeVote = PlanningCoffeeVote(participantId: uuid, vote: vote)
+        coffeeVotes.append(coffeeVote)
+        
+        if coffeeVotes.count == participants.count + 1 {
+            state = .coffeeBreakVotingFinished
+        }
+        resetIdleTimer()
+    }
+    
     func toggleCoffeeRequestVote(participantId: UUID) {
         if coffeeRequestCount.contains(participantId) {
             coffeeRequestCount.remove(participantId)
         } else {
             coffeeRequestCount.insert(participantId)
         }
-        sendStateToAll()
     }
 
     func remove(participantId: UUID) {
@@ -200,6 +222,23 @@ actor PlanningSession {
             }
         }
         state = .votingFinished
+    }
+    
+    func startCoffeeVoting() {
+        previousState = state
+        state = .coffeeBreakVoting
+        coffeeRequestCount.removeAll()
+    }
+    
+    func finishCoffeeVoting() {
+        state = .coffeeBreakVotingFinished
+    }
+    
+    func endCoffeeVoting() {
+        state = previousState ?? .none
+        previousState = nil
+        coffeeRequestCount.removeAll()
+        coffeeVotes.removeAll()
     }
     
     func startTimer(with timeInterval: TimeInterval, uuid: UUID) {

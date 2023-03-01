@@ -11,4 +11,6 @@ enum PlanningSessionState {
     case none
     case voting
     case votingFinished
+    case coffeeBreakVoting
+    case coffeeBreakVotingFinished
 }
