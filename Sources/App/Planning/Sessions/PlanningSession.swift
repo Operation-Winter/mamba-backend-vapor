@@ -57,7 +57,7 @@ actor PlanningSession {
                                     timeLeft: timerTimeLeft,
                                     spectatorCount: spectators.count,
                                     coffeeRequestCount: coffeeRequestCount.count,
-                                    coffeeVotes: nil)
+                                    coffeeVotes: coffeeVotes)
     }
     
     init(id: String,
