@@ -54,11 +54,17 @@ extension PlanningSystem {
     
     // MARK: Reconnect command
     func reconnectSpectate(webSocket: WebSocket, uuid: UUID) {
-        guard let client = clients.find(uuid) else {
-            sendInvalidCommand(error: .invalidUuid, type: .spectator, webSocket: webSocket)
-            return
+        Task {
+            guard let client = clients.find(uuid),
+                  let session = await sessions.find(id: client.sessionId)
+            else {
+                sendInvalidCommand(error: .invalidUuid, type: .spectator, webSocket: webSocket)
+                return
+            }
+            
+            client.socket = webSocket
+            client.connected = true
+            await session.sendState(to: uuid)
         }
-        client.socket = webSocket
-        client.connected = true
     }
 }
