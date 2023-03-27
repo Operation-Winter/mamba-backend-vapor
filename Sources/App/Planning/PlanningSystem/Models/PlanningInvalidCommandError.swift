@@ -14,6 +14,7 @@ enum PlanningInvalidCommandError {
     case invalidUuid
     case invalidParameters
     case invalidState
+    case noTimer
     
     var code: String {
         switch self {
@@ -23,6 +24,7 @@ enum PlanningInvalidCommandError {
         case .invalidUuid: return "0004"
         case .invalidParameters: return "0005"
         case .invalidState: return "0006"
+        case .noTimer: return "0007"
         }
     }
     
@@ -34,6 +36,7 @@ enum PlanningInvalidCommandError {
         case .invalidUuid: return "Invalid identifier"
         case .invalidParameters: return "Invalid parameters"
         case .invalidState: return "The session is not in the correct state for this command to be executed."
+        case .noTimer: return "There is no current active timer running for the session."
         }
     }
 }

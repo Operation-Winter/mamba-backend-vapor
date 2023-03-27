@@ -295,7 +295,7 @@ actor PlanningSession {
         guard state == .voting,
               let timer = timer
         else {
-            delegate?.sendInvalidCommand(error: .invalidParameters, type: .host, clientUuid: uuid)
+            delegate?.sendInvalidCommand(error: .noTimer, type: .host, clientUuid: uuid)
             return
         }
         
