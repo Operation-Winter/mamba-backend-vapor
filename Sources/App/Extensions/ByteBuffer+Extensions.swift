@@ -10,6 +10,8 @@ import Vapor
 
 extension ByteBuffer {
     func decodeWebSocketMessage<T: Codable>(_ type: T.Type) -> T? {
-        try? JSONDecoder().decode(T.self, from: self)
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return try? decoder.decode(T.self, from: self)
     }
 }

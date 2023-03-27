@@ -13,6 +13,11 @@ class PlanningSystem {
     private(set) var clients: PlanningWebSocketClients
     private(set) var sessions: PlanningSessions
     var subscriptions: [AnyCancellable] = []
+    private lazy var encoder: JSONEncoder = {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        return encoder
+    }()
     
     init(eventLoop: EventLoop) {
         clients = PlanningWebSocketClients(eventLoop: eventLoop)
@@ -55,13 +60,13 @@ class PlanningSystem {
         switch type {
         case .host:
             let command = PlanningCommands.HostServerSend.invalidCommand(message: message)
-            commandData = try? JSONEncoder().encode(command)
+            commandData = try? encoder.encode(command)
         case .join:
             let command = PlanningCommands.JoinServerSend.invalidCommand(message: message)
-            commandData = try? JSONEncoder().encode(command)
+            commandData = try? encoder.encode(command)
         case .spectator:
             let command = PlanningCommands.SpectatorServerSend.invalidCommand(message: message)
-            commandData = try? JSONEncoder().encode(command)
+            commandData = try? encoder.encode(command)
         }
         
         guard let data = commandData else { return }
@@ -69,12 +74,12 @@ class PlanningSystem {
     }
     
     func sendInvalidSessionCommand(error: PlanningInvalidSessionError, webSocket: WebSocket) {
-        guard let data = try? JSONEncoder().encode(PlanningCommands.JoinServerSend.invalidSession) else { return }
+        guard let data = try? encoder.encode(PlanningCommands.JoinServerSend.invalidSession) else { return }
         webSocket.send([UInt8](data))
     }
     
     func sendInvalidSessionCommandSpectator(error: PlanningInvalidSessionError, webSocket: WebSocket) {
-        guard let data = try? JSONEncoder().encode(PlanningCommands.SpectatorServerSend.invalidSession) else { return }
+        guard let data = try? encoder.encode(PlanningCommands.SpectatorServerSend.invalidSession) else { return }
         webSocket.send([UInt8](data))
     }
 }
@@ -82,7 +87,7 @@ class PlanningSystem {
 extension PlanningSystem: PlanningSessionDelegate {
     func send<T: Encodable>(command: T, clientUuid: UUID) {
         guard let client = clients.find(clientUuid),
-              let data = try? JSONEncoder().encode(command)
+              let data = try? encoder.encode(command)
         else { return }
         client.socket.send([UInt8](data))
     }
@@ -96,7 +101,7 @@ extension PlanningSystem: PlanningSessionDelegate {
     }
     
     private func send<T: Encodable>(command: T, clients: [WebSocketClient]) {
-        guard let data = try? JSONEncoder().encode(command) else { return }
+        guard let data = try? encoder.encode(command) else { return }
         clients.forEach { socketClient in
             socketClient.socket.send([UInt8](data))
         }

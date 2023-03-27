@@ -57,7 +57,8 @@ actor PlanningSession {
                                     timeLeft: timerTimeLeft,
                                     spectatorCount: spectators.count,
                                     coffeeRequestCount: coffeeRequestCount.count,
-                                    coffeeVotes: coffeeVotes)
+                                    coffeeVotes: coffeeVotes,
+                                    updated: Date())
     }
     
     init(id: String,
@@ -89,6 +90,8 @@ actor PlanningSession {
         configureIdleTimer()
     }
     
+    // MARK: - Session idle timer
+    
     private func configureIdleTimer() {
         idleTimer.schedule(deadline: .now(), repeating: .seconds(60))
         idleTimer.setEventHandler() { [weak self] in
@@ -114,6 +117,8 @@ actor PlanningSession {
         idleTimerMinutesLeft = 60
     }
     
+    // MARK: - Send state to
+    
     func sendState(to uuid: UUID) {
         delegate?.send(stateMessage: stateMessage, state: state, clientUuid: uuid)
     }
@@ -121,6 +126,8 @@ actor PlanningSession {
     func sendStateToAll() {
         delegate?.send(stateMessage: stateMessage, state: state, sessionId: _id)
     }
+    
+    // MARK: - Add, update or remove clients
     
     func add(participant: PlanningParticipant) {
         guard !participants.contains(where: { $0.participantId == participant.participantId }) else { return }
@@ -131,6 +138,25 @@ actor PlanningSession {
         guard !spectators.contains(where: { $0.spectatorId == spectator.spectatorId }) else { return }
         spectators.append(spectator)
     }
+    
+    func updateParticipant(participantId: UUID, name: String) {
+        participants
+            .first { $0.participantId == participantId }?
+            .name = name
+        
+        resetIdleTimer()
+    }
+    
+    func remove(participantId: UUID) {
+        ticket?.removeVotes(participantId: participantId)
+        participants.removeAll { $0.participantId == participantId }
+    }
+    
+    func remove(spectatorId: UUID) {
+        spectators.removeAll { $0.spectatorId == spectatorId }
+    }
+    
+    // MARK: - Add or update ticket
     
     func add(ticket: PlanningTicket) {
         if state == .votingFinished,
@@ -151,13 +177,7 @@ actor PlanningSession {
         resetIdleTimer()
     }
     
-    func updateParticipant(participantId: UUID, name: String) {
-        participants
-            .first { $0.participantId == participantId }?
-            .name = name
-        
-        resetIdleTimer()
-    }
+    // MARK: - Vote on ticket
     
     func add(vote card: PlanningCard?, tag: String?, uuid: UUID) {
         guard state == .voting,
@@ -176,6 +196,40 @@ actor PlanningSession {
             state = .votingFinished
         }
         resetIdleTimer()
+    }
+    
+    func resetVotes() {
+        ticket?.removeVotesAll()
+        state = .voting
+    }
+    
+    func finishVotes() {
+        participants.forEach { participant in
+            if ticket?.ticketVotes.contains(where: { $0.participantId == participant.participantId }) == false {
+                add(vote: nil, tag: nil, uuid: participant.participantId)
+            }
+        }
+        state = .votingFinished
+    }
+    
+    // MARK: - Coffee break voting
+    
+    
+    func startCoffeeVoting() {
+        previousState = state
+        state = .coffeeBreakVoting
+        coffeeRequestCount.removeAll()
+    }
+    
+    func finishCoffeeVoting() {
+        state = .coffeeBreakVotingFinished
+    }
+    
+    func endCoffeeVoting() {
+        state = previousState ?? .none
+        previousState = nil
+        coffeeRequestCount.removeAll()
+        coffeeVotes.removeAll()
     }
     
     func add(coffeBreakVote vote: Bool, uuid: UUID) {
@@ -200,63 +254,24 @@ actor PlanningSession {
             coffeeRequestCount.insert(participantId)
         }
     }
+    
+    // MARK: - Timer
 
-    func remove(participantId: UUID) {
-        ticket?.removeVotes(participantId: participantId)
-        participants.removeAll { $0.participantId == participantId }
-    }
-    
-    func remove(spectatorId: UUID) {
-        spectators.removeAll { $0.spectatorId == spectatorId }
-    }
-    
-    func resetVotes() {
-        ticket?.removeVotesAll()
-        state = .voting
-    }
-    
-    func finishVotes() {
-        participants.forEach { participant in
-            if ticket?.ticketVotes.contains(where: { $0.participantId == participant.participantId }) == false {
-                add(vote: nil, tag: nil, uuid: participant.participantId)
-            }
-        }
-        state = .votingFinished
-    }
-    
-    func startCoffeeVoting() {
-        previousState = state
-        state = .coffeeBreakVoting
-        coffeeRequestCount.removeAll()
-    }
-    
-    func finishCoffeeVoting() {
-        state = .coffeeBreakVotingFinished
-    }
-    
-    func endCoffeeVoting() {
-        state = previousState ?? .none
-        previousState = nil
-        coffeeRequestCount.removeAll()
-        coffeeVotes.removeAll()
-    }
-    
     func startTimer(with timeInterval: TimeInterval, uuid: UUID) {
         guard state == .voting,
               ticket != nil
         else {
-            delegate?.sendInvalidCommand(error: .invalidParameters, type: .host, clientUuid: uuid)
+            delegate?.sendInvalidCommand(error: .invalidState, type: .host, clientUuid: uuid)
             return
         }
         timerTimeLeft = Int(timeInterval)
         timer = DispatchSource.makeTimerSource()
         timer?.schedule(deadline: .now(), repeating: .seconds(1))
-  
+        
         timer?.setEventHandler() { [weak self] in
             guard let self = self else { return }
             Task {
                 await self.configureTimerTimeLeft((self.timerTimeLeft ?? 1) - 1)
-                await self.sendStateToAll()
                 
                 if await self.timerTimeLeft ?? 0 <= 0 {
                     await self.timer?.cancel()
@@ -269,6 +284,7 @@ actor PlanningSession {
         }
     
         timer?.activate()
+        sendStateToAll()
     }
     
     func configureTimerTimeLeft(_ timeLeft: Int?) {
@@ -288,6 +304,8 @@ actor PlanningSession {
         sendStateToAll()
         resetIdleTimer()
     }
+    
+    // MARK: - Send previous tickets
     
     func sendPreviousTickets(uuid: UUID) {
         if state == .votingFinished,

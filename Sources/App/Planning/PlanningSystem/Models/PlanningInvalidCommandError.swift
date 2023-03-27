@@ -33,7 +33,7 @@ enum PlanningInvalidCommandError {
         case .noServerCapacity: return "The server has run out of capacity, could not create a new planning session."
         case .invalidUuid: return "Invalid identifier"
         case .invalidParameters: return "Invalid parameters"
-        case .invalidState: return "Invalid state"
+        case .invalidState: return "The session is not in the correct state for this command to be executed."
         }
     }
 }
