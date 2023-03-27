@@ -282,9 +282,8 @@ actor PlanningSession {
                 }
             }
         }
-    
-        timer?.activate()
         sendStateToAll()
+        timer?.activate()
     }
     
     func configureTimerTimeLeft(_ timeLeft: Int?) {
