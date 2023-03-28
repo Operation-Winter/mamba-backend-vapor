@@ -184,7 +184,7 @@ actor PlanningSession {
               let ticket = ticket,
               participants.contains(where: { $0.participantId == uuid })
         else {
-            delegate?.sendInvalidCommand(error: .invalidParameters, type: .join, clientUuid: uuid)
+            delegate?.sendInvalidCommand(error: .invalidState, type: .join, clientUuid: uuid)
             return
         }
         ticket.removeVotes(participantId: uuid)
@@ -195,6 +195,21 @@ actor PlanningSession {
            ticket.ticketVotes.count == participants.count {
             state = .votingFinished
         }
+        resetIdleTimer()
+    }
+    
+    func update(vote card: PlanningCard?, tag: String?, uuid: UUID) {
+        guard state == .votingFinished,
+              let ticket = ticket,
+              participants.contains(where: { $0.participantId == uuid })
+        else {
+            delegate?.sendInvalidCommand(error: .invalidState, type: .join, clientUuid: uuid)
+            return
+        }
+        ticket.removeVotes(participantId: uuid)
+        let vote = PlanningTicketVote(participantId: uuid, selectedCard: card, tag: tag)
+        ticket.add(vote: vote)
+
         resetIdleTimer()
     }
     

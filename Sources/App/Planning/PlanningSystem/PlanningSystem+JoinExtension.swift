@@ -27,10 +27,13 @@ extension PlanningSystem {
             requestCoffeeBreak(webSocket: webSocket, uuid: uuid)
         case .coffeeBreakVote(let uuid, let message):
             coffeeBreakVote(message: message, webSocket: webSocket, uuid: uuid)
+        case .concedeVote(let uuid, let message):
+            updateVote(message: message, webSocket: webSocket, uuid: uuid)
         }
     }
     
-    // MARK: Join session command
+    // MARK: - Join session command
+    
     func joinSession(message: PlanningJoinSessionMessage, webSocket: WebSocket, uuid: UUID) {
         Task {
             guard let session = await sessions.find(id: message.sessionCode),
@@ -62,7 +65,8 @@ extension PlanningSystem {
         }
     }
     
-    // MARK: Vote command
+    // MARK: - Vote command
+    
     func vote(message: PlanningVoteMessage, webSocket: WebSocket, uuid: UUID) {
         Task {
             guard let client = clients.find(uuid),
@@ -77,8 +81,26 @@ extension PlanningSystem {
             await session.sendStateToAll()
         }
     }
+    
+    // MARK: - Update vote command
+    
+    func updateVote(message: PlanningVoteMessage, webSocket: WebSocket, uuid: UUID) {
+        Task {
+            guard let client = clients.find(uuid),
+                  let session = await sessions.find(id: client.sessionId)
+            else {
+                sendInvalidCommand(error: .invalidUuid, type: .join, webSocket: webSocket)
+                return
+            }
+            client.socket = webSocket
+             
+            await session.update(vote: message.selectedCard, tag: message.tag, uuid: uuid)
+            await session.sendStateToAll()
+        }
+    }
 
-    // MARK: Leave session command
+    // MARK: - Leave session command
+    
     func leaveSession(webSocket: WebSocket, uuid: UUID) {
         Task {
             guard let client = clients.find(uuid),
@@ -95,7 +117,8 @@ extension PlanningSystem {
         }
     }
     
-    // MARK: Change name command
+    // MARK: - Change name command
+    
     func changeName(message: PlanningChangeNameMessage, webSocket: WebSocket, uuid: UUID) {
         Task {
             guard let client = clients.find(uuid),
@@ -111,7 +134,8 @@ extension PlanningSystem {
         }
     }
     
-    // MARK: Reconnect command
+    // MARK: - Reconnect command
+    
     func reconnectJoin(webSocket: WebSocket, uuid: UUID) {
         guard let client = clients.find(uuid) else {
             sendInvalidCommand(error: .invalidUuid, type: .join, webSocket: webSocket)
@@ -121,7 +145,8 @@ extension PlanningSystem {
         client.connected = true
     }
     
-    // MARK: Request coffee break command
+    // MARK: - Request coffee break command
+    
     func requestCoffeeBreak(webSocket: WebSocket, uuid: UUID) {
         Task {
             guard let client = clients.find(uuid),
@@ -136,7 +161,8 @@ extension PlanningSystem {
         }
     }
     
-    // MARK: Coffee break vote command
+    // MARK: - Coffee break vote command
+    
     func coffeeBreakVote(message: PlanningCoffeeBreakVoteMessage, webSocket: WebSocket, uuid: UUID) {
         Task {
             guard let client = clients.find(uuid),

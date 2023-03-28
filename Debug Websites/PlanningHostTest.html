@@ -48,6 +48,20 @@
             </tr>
             <tr>
                 <td>
+                    <button id="editTicketCommand">Edit Ticket</button>
+                </td>
+                <td>
+                    <b>Title: </b><input id="editTicketTitle" />
+                </td>
+                <td>
+                    <b>Description: </b><input id="editTicketDescription" />
+                </td>
+                <td>
+                    <b>Selected tags: </b><input id="editSelectedTags" />
+                </td>
+            </tr>
+            <tr>
+                <td>
                     <button id="skipVoteCommand">Skip Vote</button>
                 </td>
                 <td>
@@ -57,11 +71,6 @@
             <tr>
                 <td>
                     <button id="revoteCommand">Revote Ticket</button>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <button id="endSessionCommand">End Session</button>
                 </td>
             </tr>
             <tr>
@@ -82,20 +91,7 @@
                     <button id="reconnectCommand">Reconnect</button>
                 </td>
             </tr>
-            <tr>
-                <td>
-                    <button id="editTicketCommand">Edit Ticket</button>
-                </td>
-                <td>
-                    <b>Title: </b><input id="editTicketTitle" />
-                </td>
-                <td>
-                    <b>Description: </b><input id="editTicketDescription" />
-                </td>
-                <td>
-                    <b>Selected tags: </b><input id="editSelectedTags" />
-                </td>
-            </tr>
+
             <tr>
                 <td>
                     <button id="addTimerCommand">Add Timer</button>
@@ -112,6 +108,39 @@
             <tr>
                 <td>
                     <button id="previousTicketsCommand">Previous Tickets</button>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <button id="requestCoffeeBreakVoteCommand">Request coffee break vote</button>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <button id="startCoffeeBreakVotingCommand">Start coffee break voting</button>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <button id="coffeeBreakVoteCommand">Coffee break vote</button>
+                </td>
+                <td>
+                    <b>Vote: </b><input type="checkbox" id="coffeeBreakVote" />
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <button id="finishCoffeeBreakVotingCommand">Finish coffee break voting</button>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <button id="endCoffeeBreakVotingCommand">End coffee break voting</button>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <button id="endSessionCommand">End Session</button>
                 </td>
             </tr>
         </table>
@@ -311,7 +340,7 @@
         socket.close()
         socket = createSocket();
 
-        setTimeout(function(){
+        setTimeout(function () {
             let command = JSON.stringify({
                 uuid: uuid,
                 type: "RECONNECT"
@@ -372,7 +401,7 @@
         });
         sendMessage(command);
     };
-    
+
     // Previous tickets command
     const previousTicketsCommandButton = document.getElementById("previousTicketsCommand");
 
@@ -383,6 +412,66 @@
         });
         sendMessage(command);
     };
+
+    // Request coffee break command
+    const requestCoffeeBreakVoteCommandButton = document.getElementById("requestCoffeeBreakVoteCommand");
+
+    requestCoffeeBreakVoteCommandButton.onclick = function (event) {
+        let command = JSON.stringify({
+            uuid: uuid,
+            type: "REQUEST_COFFEE_BREAK"
+        });
+        sendMessage(command);
+    };
+
+    // Start coffee break voting command
+    const startCoffeeBreakVotingCommandButton = document.getElementById("startCoffeeBreakVotingCommand");
+
+    startCoffeeBreakVotingCommandButton.onclick = function (event) {
+        let command = JSON.stringify({
+            uuid: uuid,
+            type: "START_COFFEE_BREAK_VOTE"
+        });
+        sendMessage(command);
+    };
+
+    // Finish coffee break voting command
+    const finishCoffeeBreakVotingCommandButton = document.getElementById("finishCoffeeBreakVotingCommand");
+
+    finishCoffeeBreakVotingCommandButton.onclick = function (event) {
+        let command = JSON.stringify({
+            uuid: uuid,
+            type: "FINISH_COFFEE_BREAK_VOTE"
+        });
+        sendMessage(command);
+    };
+
+    // End coffee break voting command
+    const endCoffeeBreakVotingCommandButton = document.getElementById("endCoffeeBreakVotingCommand");
+
+    endCoffeeBreakVotingCommandButton.onclick = function (event) {
+        let command = JSON.stringify({
+            uuid: uuid,
+            type: "END_COFFEE_BREAK_VOTE"
+        });
+        sendMessage(command);
+    };
+
+    // Coffee Break Vote Command
+    const coffeeBreakVoteCommandButton = document.getElementById("coffeeBreakVoteCommand");
+    const coffeeBreakVote = document.getElementById("coffeeBreakVote");
+
+    coffeeBreakVoteCommandButton.onclick = function (event) {
+        let command = JSON.stringify(coffeeBreakVoteCommand(coffeeBreakVote.checked));
+        sendMessage(command);
+    };
+
+    function coffeeBreakVoteCommand(coffeeBreakVote) {
+        let message = {
+            vote: coffeeBreakVote
+        }
+        return new Command("COFFEE_BREAK_VOTE", message)
+    }
 </script>
 
 </html>
