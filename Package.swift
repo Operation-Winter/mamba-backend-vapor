@@ -1,4 +1,4 @@
-// swift-tools-version:5.3
+// swift-tools-version:6.2
 import PackageDescription
 
 let package = Package(
@@ -7,9 +7,9 @@ let package = Package(
        .macOS(.v10_15)
     ],
     dependencies: [
-        .package(url: "https://github.com/vapor/vapor.git", from: "4.70.0"),
-        .package(name: "mamba-networking", url: "https://github.com/Operation-Winter/mamba-networking.git", from: "1.13.0"),
-        .package(url: "https://github.com/OpenCombine/OpenCombine.git", from: "0.13.0")
+        .package(url: "https://github.com/vapor/vapor.git", from: "4.122.0"),
+        .package(url: "https://github.com/Operation-Winter/mamba-networking.git", from: "1.18.0"),
+        .package(url: "https://github.com/OpenCombine/OpenCombine.git", from: "0.14.0")
     ], targets: [
         .target(
             name: "App",
@@ -24,12 +24,13 @@ let package = Package(
                 .unsafeFlags(["-cross-module-optimization"], .when(configuration: .release))
             ]
         ),
-        .target(name: "Run", dependencies: [
+        .executableTarget(name: "Run", dependencies: [
             .target(name: "App")
         ]),
         .testTarget(name: "AppTests", dependencies: [
             .target(name: "App"),
             .product(name: "XCTVapor", package: "vapor"),
         ])
-    ]
+    ],
+    swiftLanguageModes: [.v5]
 )

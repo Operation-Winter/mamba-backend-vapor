@@ -35,8 +35,8 @@ The Mamba project allows a user to host or join a Story Point Planning session a
 
 ### Built With
 
-- [Vapor 4.0](https://vapor.codes/)
-- [Swift 5.3](https://swift.org/blog/)
+- [Vapor 4.122](https://vapor.codes/)
+- [Swift 6.0+](https://swift.org/blog/)
 - [Swift Package Manager](https://swift.org/package-manager/)
 - [Mamba Networking](https://github.com/Operation-Winter/mamba-networking)
 
@@ -46,7 +46,7 @@ To get a local copy up and running follow these simple example steps.
 
 ### Prerequisites
 
-1. XCode 12 Development Tools
+1. Swift 6.0+ development tools (or Xcode 16+ on macOS)
 2. Install Vapor using brew.
 
 ```sh
