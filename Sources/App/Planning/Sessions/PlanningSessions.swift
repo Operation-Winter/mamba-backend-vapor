@@ -9,6 +9,7 @@ import Foundation
 
 actor PlanningSessions {
     private var storage: [String : PlanningSession]
+    private var reservedIDs: Set<String> = []
     
     var count: Int {
         storage.count
@@ -19,11 +20,22 @@ actor PlanningSessions {
     }
     
     func add(_ session: PlanningSession) {
-        storage[session.id.value] = session
+        reservedIDs.remove(session.id)
+        storage[session.id] = session
     }
     
     func remove(_ session: PlanningSession) {
-        storage[session.id.value] = nil
+        storage[session.id] = nil
+    }
+
+    func reserveNextID() -> String? {
+        for value in 0...999999 {
+            let id = String(format: "%06d", value)
+            guard storage[id] == nil, !reservedIDs.contains(id) else { continue }
+            reservedIDs.insert(id)
+            return id
+        }
+        return nil
     }
     
     func find(id: String) -> PlanningSession? {

@@ -9,14 +9,14 @@ import Foundation
 import MambaNetworking
 
 protocol PlanningSessionDelegate: AnyObject {
-    func send<T: Encodable>(command: T, clientUuid: UUID)
-    func send(hostCommand command: PlanningCommands.HostServerSend, clientUuid: UUID)
-    func send(joinCommand command: PlanningCommands.JoinServerSend, clientUuid: UUID)
-    func send(hostCommand command: PlanningCommands.HostServerSend, sessionId: String)
-    func send(joinCommand command: PlanningCommands.JoinServerSend, sessionId: String)
-    func send(stateMessage: PlanningSessionStateMessage, state: PlanningSessionState, sessionId: String)
-    func send(stateMessage: PlanningSessionStateMessage, state: PlanningSessionState, clientUuid: UUID)
-    func sendInvalidCommand(error: PlanningInvalidCommandError, type: PlanningSystemType, clientUuid: UUID)
-    func sendInvalidSessionCommand(error: PlanningInvalidSessionError, clientUuid: UUID)
-    func sessionHasTimedOut(sessionId: String)
+    func send<T: Encodable>(command: T, clientUuid: UUID) async
+    func send(hostCommand command: PlanningCommands.HostServerSend, clientUuid: UUID) async
+    func send(joinCommand command: PlanningCommands.JoinServerSend, clientUuid: UUID) async
+    func send(hostCommand command: PlanningCommands.HostServerSend, sessionId: String) async
+    func send(joinCommand command: PlanningCommands.JoinServerSend, sessionId: String) async
+    func send(stateMessage: PlanningSessionStateMessage, state: PlanningSessionState, sessionId: String) async
+    func send(stateMessage: PlanningSessionStateMessage, state: PlanningSessionState, clientUuid: UUID) async
+    func sendInvalidCommand(error: PlanningInvalidCommandError, type: PlanningSystemType, clientUuid: UUID) async
+    func sendInvalidSessionCommand(error: PlanningInvalidSessionError, clientUuid: UUID) async
+    func sessionHasTimedOut(sessionId: String) async
 }

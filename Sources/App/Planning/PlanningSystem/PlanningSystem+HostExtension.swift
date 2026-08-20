@@ -1,6 +1,5 @@
 //
 //  PlanningSystem+HostExtension.swift
-//  
 //
 //  Created by Armand Kamffer on 2020/10/01.
 //
@@ -53,296 +52,234 @@ extension PlanningSystem {
     // MARK: Start session command
     private func startSession(message: PlanningStartSessionMessage, webSocket: WebSocket, uuid: UUID) {
         Task {
-            guard let sessionId = await generateSessionId() else {
+            guard PlanningInputValidation.validSession(message) else {
+                sendInvalidCommand(error: .invalidParameters, type: .host, webSocket: webSocket)
+                return
+            }
+            guard await clients.reserve(uuid) else {
+                sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
+                return
+            }
+            guard let sessionId = await sessions.reserveNextID() else {
+                await clients.release(uuid)
                 sendInvalidCommand(error: .noServerCapacity, type: .host, webSocket: webSocket)
                 return
             }
-            let client = PlanningWebSocketClient(id: uuid, socket: webSocket, sessionId: sessionId, type: .host, connected: true)
-            
-            let session = await PlanningSession(id: sessionId,
-                                                name: message.sessionName,
-                                                password: message.password,
-                                                availableCards: message.availableCards,
-                                                autoCompleteVoting: message.autoCompleteVoting,
-                                                delegate: self)
-            
-            clients.add(client)
-            
+
+            let client = PlanningWebSocketClient(
+                id: uuid,
+                socket: webSocket,
+                sessionId: sessionId,
+                type: .host,
+                connected: true
+            )
+            let session = await PlanningSession(
+                id: sessionId,
+                hostId: uuid,
+                name: message.sessionName,
+                password: message.password,
+                availableCards: message.availableCards,
+                autoCompleteVoting: message.autoCompleteVoting,
+                delegate: self
+            )
+
+            await clients.add(client)
             await sessions.add(session)
             await session.sendStateToAll()
         }
     }
-    
-    private func generateSessionId() async -> String? {
-        var sessionCount = 0
-        var sessionId = String(format: "%06d", sessionCount)
-        
-        while await sessions.exists(id: sessionId) && sessionCount <= 999999 {
-            sessionCount += 1
-            sessionId = String(format: "%06d", sessionCount)
-        }
-        
-        return sessionId
-    }
-    
+
     // MARK: Add ticket command
     private func addTicket(message: PlanningTicketMessage, webSocket: WebSocket, uuid: UUID) {
         Task {
-            guard let client = clients.find(uuid),
-                  let session = await sessions.find(id: client.sessionId)
-            else {
-                sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
+            guard PlanningInputValidation.validTicket(message) else {
+                sendInvalidCommand(error: .invalidParameters, type: .host, webSocket: webSocket)
                 return
             }
-            client.socket = webSocket
-            let ticket = PlanningTicket(title: message.title,
-                                        description: message.description,
-                                        selectedTags: message.selectedTags)
-            
-            await session.add(ticket: ticket)
+            guard let client = await authorizedClient(uuid: uuid, type: .host, webSocket: webSocket),
+                  let session = await sessions.find(id: client.sessionId) else { return }
+            let ticket = PlanningTicket(
+                title: message.title,
+                description: message.description,
+                selectedTags: message.selectedTags
+            )
+            await session.add(ticket: ticket, uuid: uuid)
             await session.sendStateToAll()
         }
     }
-    
+
     // MARK: Skip vote command
     private func skipVote(message: PlanningSkipVoteMessage, webSocket: WebSocket, uuid: UUID) {
         Task {
-            guard let client = clients.find(uuid),
-                  let session = await sessions.find(id: client.sessionId)
-            else {
-                sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
-                return
-            }
-            client.socket = webSocket
-            
-            await session.add(vote: nil,
-                              tag: nil,
-                              uuid: message.participantId,
-                              commandType: .host,
-                              commandUuid: uuid)
+            guard let client = await authorizedClient(uuid: uuid, type: .host, webSocket: webSocket),
+                  let session = await sessions.find(id: client.sessionId) else { return }
+            await session.add(
+                vote: nil,
+                tag: nil,
+                uuid: message.participantId,
+                commandType: .host,
+                commandUuid: uuid
+            )
             await session.sendStateToAll()
         }
     }
-    
+
     // MARK: Revote command
     private func revote(webSocket: WebSocket, uuid: UUID) {
         Task {
-            guard let client = clients.find(uuid),
-                  let session = await sessions.find(id: client.sessionId)
-            else {
-                sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
-                return
-            }
-            client.socket = webSocket
-            
-            await session.resetVotes()
+            guard let client = await authorizedClient(uuid: uuid, type: .host, webSocket: webSocket),
+                  let session = await sessions.find(id: client.sessionId) else { return }
+            await session.resetVotes(uuid: uuid)
             await session.sendStateToAll()
         }
     }
-    
+
     // MARK: End session command
     private func endSession(webSocket: WebSocket, uuid: UUID) {
         Task {
-            guard let client = clients.find(uuid),
-                  let session = await sessions.find(id: client.sessionId)
-            else {
-                sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
-                return
-            }
-            client.socket = webSocket
-            send(joinCommand: .endSession, sessionId: session.id.value)
-            send(spectatorCommand: .endSession, sessionId: session.id.value)
-            clients.close(sessionId: session.id.value, type: .host)
-            clients.close(sessionId: session.id.value, type: .join)
-            clients.close(sessionId: session.id.value, type: .spectator)
+            guard let client = await authorizedClient(uuid: uuid, type: .host, webSocket: webSocket),
+                  let session = await sessions.find(id: client.sessionId) else { return }
+            await send(joinCommand: .endSession, sessionId: session.id)
+            await send(spectatorCommand: .endSession, sessionId: session.id)
+            await clients.close(sessionId: session.id, type: .host)
+            await clients.close(sessionId: session.id, type: .join)
+            await clients.close(sessionId: session.id, type: .spectator)
             await sessions.remove(session)
         }
     }
-    
+
     // MARK: Remove participant command
     func removeParticipant(message: PlanningRemoveParticipantMessage, webSocket: WebSocket, uuid: UUID) {
         Task {
-            guard let client = clients.find(uuid),
-                  let session = await sessions.find(id: client.sessionId)
-            else {
-                sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
-                return
-            }
-            client.socket = webSocket
-            send(joinCommand: .removeParticipant, clientUuid: message.participantId)
-            
+            guard let client = await authorizedClient(uuid: uuid, type: .host, webSocket: webSocket),
+                  let session = await sessions.find(id: client.sessionId) else { return }
+            await send(joinCommand: .removeParticipant, clientUuid: message.participantId)
             await session.remove(participantId: message.participantId)
-            clients.close(message.participantId)
+            await clients.close(message.participantId)
             await session.sendStateToAll()
         }
     }
-    
+
     // MARK: Finish voting command
     func finishVoting(webSocket: WebSocket, uuid: UUID) {
         Task {
-            guard let client = clients.find(uuid),
-                  let session = await sessions.find(id: client.sessionId)
-            else {
-                sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
-                return
-            }
-            client.socket = webSocket
-            
-            await session.finishVotes()
+            guard let client = await authorizedClient(uuid: uuid, type: .host, webSocket: webSocket),
+                  let session = await sessions.find(id: client.sessionId) else { return }
+            await session.finishVotes(uuid: uuid)
             await session.sendStateToAll()
         }
     }
-    
+
     // MARK: Edit ticket command
     private func editTicket(message: PlanningTicketMessage, webSocket: WebSocket, uuid: UUID) {
         Task {
-            guard let client = clients.find(uuid),
-                  let session = await sessions.find(id: client.sessionId)
-            else {
-                sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
+            guard let client = await authorizedClient(uuid: uuid, type: .host, webSocket: webSocket),
+                  let session = await sessions.find(id: client.sessionId) else { return }
+            guard PlanningInputValidation.validTicket(message) else {
+                sendInvalidCommand(error: .invalidParameters, type: .host, webSocket: webSocket)
                 return
             }
-            client.socket = webSocket
-            
-            await session.updateTicket(title: message.title, description: message.description, selectedTags: message.selectedTags)
+            await session.updateTicket(
+                title: message.title,
+                description: message.description,
+                selectedTags: message.selectedTags,
+                uuid: uuid
+            )
             await session.sendStateToAll()
         }
     }
-    
+
     // MARK: Add timer command
     private func addTimer(message: PlanningAddTimerMessage, webSocket: WebSocket, uuid: UUID) {
         Task {
-            guard let client = clients.find(uuid),
-                  let session = await sessions.find(id: client.sessionId)
-            else {
-                sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
-                return
-            }
-            client.socket = webSocket
-        
+            guard let client = await authorizedClient(uuid: uuid, type: .host, webSocket: webSocket),
+                  let session = await sessions.find(id: client.sessionId) else { return }
             await session.startTimer(with: message.time, uuid: uuid)
         }
     }
-    
+
     // MARK: Cancel timer command
     private func cancelTimer(webSocket: WebSocket, uuid: UUID) {
         Task {
-            guard let client = clients.find(uuid),
-                  let session = await sessions.find(id: client.sessionId)
-            else {
-                sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
-                return
-            }
-            client.socket = webSocket
-        
+            guard let client = await authorizedClient(uuid: uuid, type: .host, webSocket: webSocket),
+                  let session = await sessions.find(id: client.sessionId) else { return }
             await session.cancelTimer(uuid: uuid)
         }
     }
-    
+
     // MARK: Previous tickets command
     private func previousTickets(webSocket: WebSocket, uuid: UUID) {
         Task {
-            guard let client = clients.find(uuid),
-                  let session = await sessions.find(id: client.sessionId)
-            else {
-                sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
-                return
-            }
-            client.socket = webSocket
-            
+            guard let client = await authorizedClient(uuid: uuid, type: .host, webSocket: webSocket),
+                  let session = await sessions.find(id: client.sessionId) else { return }
             await session.sendPreviousTickets(uuid: uuid)
         }
     }
-    
+
     // MARK: Reconnect command
     func reconnectHost(webSocket: WebSocket, uuid: UUID) {
         Task {
-            guard let client = clients.find(uuid),
-                  let session = await sessions.find(id: client.sessionId) else {
-                sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
-                return
-            }
-            client.socket = webSocket
-            client.connected = true
-            
+            guard let client = await reconnectingClient(uuid: uuid, type: .host, webSocket: webSocket),
+                  let session = await sessions.find(id: client.sessionId) else { return }
             await session.sendState(to: client.id)
         }
     }
-    
+
     // MARK: Request coffee break command
     func requestHostCoffeeBreak(webSocket: WebSocket, uuid: UUID) {
         Task {
-            guard let client = clients.find(uuid),
-                  let session = await sessions.find(id: client.sessionId)
-            else {
-                sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
-                return
-            }
-            client.socket = webSocket
-            await session.toggleCoffeeRequestVote(participantId: uuid)
+            guard let client = await authorizedClient(uuid: uuid, type: .host, webSocket: webSocket),
+                  let session = await sessions.find(id: client.sessionId) else { return }
+            await session.toggleCoffeeRequestVote(
+                participantId: uuid,
+                commandType: .host,
+                commandUuid: uuid
+            )
             await session.sendStateToAll()
         }
     }
-    
+
     // MARK: Start coffee break vote command
     func startCoffeeBreakVote(webSocket: WebSocket, uuid: UUID) {
         Task {
-            guard let client = clients.find(uuid),
-                  let session = await sessions.find(id: client.sessionId)
-            else {
-                sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
-                return
-            }
-            client.socket = webSocket
-            await session.startCoffeeVoting()
+            guard let client = await authorizedClient(uuid: uuid, type: .host, webSocket: webSocket),
+                  let session = await sessions.find(id: client.sessionId) else { return }
+            await session.startCoffeeVoting(uuid: uuid)
             await session.sendStateToAll()
         }
     }
-    
+
     // MARK: Finish coffee break vote command
     func finishCoffeeBreakVote(webSocket: WebSocket, uuid: UUID) {
         Task {
-            guard let client = clients.find(uuid),
-                  let session = await sessions.find(id: client.sessionId)
-            else {
-                sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
-                return
-            }
-            client.socket = webSocket
-            await session.finishCoffeeVoting()
+            guard let client = await authorizedClient(uuid: uuid, type: .host, webSocket: webSocket),
+                  let session = await sessions.find(id: client.sessionId) else { return }
+            await session.finishCoffeeVoting(uuid: uuid)
             await session.sendStateToAll()
         }
     }
-    
+
     // MARK: End coffee break vote command
     func endCoffeeBreakVote(webSocket: WebSocket, uuid: UUID) {
         Task {
-            guard let client = clients.find(uuid),
-                  let session = await sessions.find(id: client.sessionId)
-            else {
-                sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
-                return
-            }
-            client.socket = webSocket
-            await session.endCoffeeVoting()
+            guard let client = await authorizedClient(uuid: uuid, type: .host, webSocket: webSocket),
+                  let session = await sessions.find(id: client.sessionId) else { return }
+            await session.endCoffeeVoting(uuid: uuid)
             await session.sendStateToAll()
         }
     }
-    
+
     // MARK: Host coffee vote command
     func hostCoffeeBreakVote(message: PlanningCoffeeBreakVoteMessage, webSocket: WebSocket, uuid: UUID) {
         Task {
-            guard let client = clients.find(uuid),
-                  let session = await sessions.find(id: client.sessionId)
-            else {
-                sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
-                return
-            }
-            client.socket = webSocket
-            await session.add(coffeBreakVote: message.vote,
-                              uuid: uuid,
-                              commandType: .host,
-                              commandUuid: uuid)
+            guard let client = await authorizedClient(uuid: uuid, type: .host, webSocket: webSocket),
+                  let session = await sessions.find(id: client.sessionId) else { return }
+            await session.add(
+                coffeBreakVote: message.vote,
+                uuid: uuid,
+                commandType: .host,
+                commandUuid: uuid
+            )
             await session.sendStateToAll()
         }
     }

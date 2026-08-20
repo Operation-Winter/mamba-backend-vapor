@@ -5,10 +5,8 @@
 //  Created by Armand Kamffer on 2020/10/01.
 //
 
-import Vapor
+import Foundation
 
 protocol WebSocketClient {
     var id: UUID { get }
-    var socket: WebSocket { get }
-    var connected: Bool { get set }
 }

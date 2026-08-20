@@ -18,15 +18,20 @@ extension PlanningSystem {
     // MARK: Join spectate session command
     func joinSpectateSession(message: PlanningSpectateSessionMessage, webSocket: WebSocket, uuid: UUID) {
         Task {
+            guard await clients.reserve(uuid) else {
+                sendInvalidCommand(error: .invalidUuid, type: .spectator, webSocket: webSocket)
+                return
+            }
             guard let session = await sessions.find(id: message.sessionCode),
                   session.password == message.password
             else {
+                await clients.release(uuid)
                 sendInvalidSessionCommandSpectator(error: .doesntExist, webSocket: webSocket)
                 return
             }
             
-            let client = PlanningWebSocketClient(id: uuid, socket: webSocket, sessionId: session.id.value, type: .spectator, connected: true)
-            clients.add(client)
+            let client = PlanningWebSocketClient(id: uuid, socket: webSocket, sessionId: session.id, type: .spectator, connected: true)
+            await clients.add(client)
             
             let spectator = PlanningSpectator(spectatorId: client.id)
             
@@ -38,16 +43,14 @@ extension PlanningSystem {
     // MARK: Leave session command
     func leaveSessionSpectator(webSocket: WebSocket, uuid: UUID) {
         Task {
-            guard let client = clients.find(uuid),
+            guard let client = await authorizedClient(uuid: uuid, type: .spectator, webSocket: webSocket),
                   let session = await sessions.find(id: client.sessionId)
             else {
                 sendInvalidCommand(error: .invalidUuid, type: .spectator, webSocket: webSocket)
                 return
             }
-            client.socket = webSocket
-            
             await session.remove(spectatorId: uuid)
-            clients.close(uuid)
+            await clients.close(uuid)
             await session.sendStateToAll()
         }
     }
@@ -55,15 +58,13 @@ extension PlanningSystem {
     // MARK: Reconnect command
     func reconnectSpectate(webSocket: WebSocket, uuid: UUID) {
         Task {
-            guard let client = clients.find(uuid),
+            guard let client = await reconnectingClient(uuid: uuid, type: .spectator, webSocket: webSocket),
                   let session = await sessions.find(id: client.sessionId)
             else {
                 sendInvalidCommand(error: .invalidUuid, type: .spectator, webSocket: webSocket)
                 return
             }
             
-            client.socket = webSocket
-            client.connected = true
             await session.sendState(to: uuid)
         }
     }

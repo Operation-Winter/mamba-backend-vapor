@@ -7,17 +7,39 @@
 
 import Vapor
 import MambaNetworking
-import OpenCombine
+
+enum PlanningInputValidation {
+    static func validSession(_ message: PlanningStartSessionMessage) -> Bool {
+        validText(message.sessionName, maxLength: 100) &&
+        !message.availableCards.isEmpty &&
+        (message.password?.count ?? 0) <= 128
+    }
+
+    static func validParticipantName(_ name: String) -> Bool {
+        validText(name, maxLength: 100)
+    }
+
+    static func validTicket(_ message: PlanningTicketMessage) -> Bool {
+        validText(message.title, maxLength: 200) &&
+        message.description.count <= 5_000 &&
+        message.selectedTags.count <= 50 &&
+        message.selectedTags.allSatisfy { validText($0, maxLength: 50) }
+    }
+
+    private static func validText(_ value: String, maxLength: Int) -> Bool {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !trimmed.isEmpty && value.count <= maxLength
+    }
+}
 
 class PlanningSystem {
     private(set) var clients: PlanningWebSocketClients
     private(set) var sessions: PlanningSessions
-    var subscriptions: [AnyCancellable] = []
-    private lazy var encoder: JSONEncoder = {
+    private func encode<T: Encodable>(_ value: T) -> Data? {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
-        return encoder
-    }()
+        return try? encoder.encode(value)
+    }
     
     init(eventLoop: EventLoop) {
         clients = PlanningWebSocketClients(eventLoop: eventLoop)
@@ -25,9 +47,9 @@ class PlanningSystem {
     }
     
     func connect(_ webSocket: WebSocket, type: PlanningSystemType) {
-        webSocket.eventLoop.execute { [unowned self] in
-            webSocket.onBinary { [unowned self] webSocket, buffer in
-                parseBufferMessage(webSocket: webSocket, buffer: buffer, type: type)
+        webSocket.eventLoop.execute { [weak self] in
+            webSocket.onBinary { [weak self] webSocket, buffer in
+                self?.parseBufferMessage(webSocket: webSocket, buffer: buffer, type: type)
             }
         }
     }
@@ -54,116 +76,128 @@ class PlanningSystem {
             execute(command: command, webSocket: webSocket)
         }
     }
-    
-    func sendInvalidCommand(error: PlanningInvalidCommandError, type: PlanningSystemType, webSocket: WebSocket) {
+
+    func authorizedClient(uuid: UUID,
+                         type: PlanningSystemType,
+                         webSocket: WebSocket) async -> PlanningWebSocketClient? {
+        guard let client = await clients.authorized(uuid, type: type, socket: webSocket)
+        else {
+            sendInvalidCommand(error: .invalidUuid, type: type, webSocket: webSocket)
+            return nil
+        }
+        return client
+    }
+
+    func reconnectingClient(uuid: UUID,
+                           type: PlanningSystemType,
+                           webSocket: WebSocket) async -> PlanningWebSocketClient? {
+        guard let client = await clients.reconnect(uuid, type: type, socket: webSocket) else {
+            sendInvalidCommand(error: .invalidUuid, type: type, webSocket: webSocket)
+            return nil
+        }
+        return client
+    }
+
+    private func invalidCommandData(error: PlanningInvalidCommandError,
+                                    type: PlanningSystemType) -> Data? {
         let message = PlanningInvalidCommandMessage(code: error.code, description: error.description)
-        var commandData: Data?
-        
+
         switch type {
         case .host:
-            let command = PlanningCommands.HostServerSend.invalidCommand(message: message)
-            commandData = try? encoder.encode(command)
+            return encode(PlanningCommands.HostServerSend.invalidCommand(message: message))
         case .join:
-            let command = PlanningCommands.JoinServerSend.invalidCommand(message: message)
-            commandData = try? encoder.encode(command)
+            return encode(PlanningCommands.JoinServerSend.invalidCommand(message: message))
         case .spectator:
-            let command = PlanningCommands.SpectatorServerSend.invalidCommand(message: message)
-            commandData = try? encoder.encode(command)
+            return encode(PlanningCommands.SpectatorServerSend.invalidCommand(message: message))
         }
-        
-        guard let data = commandData else { return }
+    }
+    
+    func sendInvalidCommand(error: PlanningInvalidCommandError, type: PlanningSystemType, webSocket: WebSocket) {
+        guard let data = invalidCommandData(error: error, type: type) else { return }
         webSocket.send([UInt8](data))
     }
     
     func sendInvalidSessionCommand(error: PlanningInvalidSessionError, webSocket: WebSocket) {
-        guard let data = try? encoder.encode(PlanningCommands.JoinServerSend.invalidSession) else { return }
+        guard let data = encode(PlanningCommands.JoinServerSend.invalidSession) else { return }
         webSocket.send([UInt8](data))
     }
     
     func sendInvalidSessionCommandSpectator(error: PlanningInvalidSessionError, webSocket: WebSocket) {
-        guard let data = try? encoder.encode(PlanningCommands.SpectatorServerSend.invalidSession) else { return }
+        guard let data = encode(PlanningCommands.SpectatorServerSend.invalidSession) else { return }
         webSocket.send([UInt8](data))
     }
 }
 
 extension PlanningSystem: PlanningSessionDelegate {
-    func send<T: Encodable>(command: T, clientUuid: UUID) {
-        guard let client = clients.find(clientUuid),
-              let data = try? encoder.encode(command)
+    func send<T: Encodable>(command: T, clientUuid: UUID) async {
+        guard let data = encode(command)
         else { return }
-        client.socket.send([UInt8](data))
+        await clients.send(data, to: clientUuid)
     }
     
-    func send(hostCommand command: PlanningCommands.HostServerSend, clientUuid: UUID) {
-        send(command: command, clientUuid: clientUuid)
+    func send(hostCommand command: PlanningCommands.HostServerSend, clientUuid: UUID) async {
+        await send(command: command, clientUuid: clientUuid)
     }
     
-    func send(joinCommand command: PlanningCommands.JoinServerSend, clientUuid: UUID) {
-        send(command: command, clientUuid: clientUuid)
+    func send(joinCommand command: PlanningCommands.JoinServerSend, clientUuid: UUID) async {
+        await send(command: command, clientUuid: clientUuid)
     }
     
-    private func send<T: Encodable>(command: T, clients: [WebSocketClient]) {
-        guard let data = try? encoder.encode(command) else { return }
-        clients.forEach { socketClient in
-            socketClient.socket.send([UInt8](data))
-        }
+    func send(hostCommand command: PlanningCommands.HostServerSend, sessionId: String) async {
+        guard let data = encode(command) else { return }
+        await clients.send(data, sessionId: sessionId, type: .host)
     }
     
-    func send(hostCommand command: PlanningCommands.HostServerSend, sessionId: String) {
-        let socketClients = clients.find(sessionId: sessionId, type: .host)
-        send(command: command, clients: socketClients)
+    func send(joinCommand command: PlanningCommands.JoinServerSend, sessionId: String) async {
+        guard let data = encode(command) else { return }
+        await clients.send(data, sessionId: sessionId, type: .join)
     }
     
-    func send(joinCommand command: PlanningCommands.JoinServerSend, sessionId: String) {
-        let socketClients = clients.find(sessionId: sessionId, type: .join)
-        send(command: command, clients: socketClients)
-    }
-    
-    func send(spectatorCommand command: PlanningCommands.SpectatorServerSend, sessionId: String) {
-        let socketClients = clients.find(sessionId: sessionId, type: .spectator)
-        send(command: command, clients: socketClients)
+    func send(spectatorCommand command: PlanningCommands.SpectatorServerSend, sessionId: String) async {
+        guard let data = encode(command) else { return }
+        await clients.send(data, sessionId: sessionId, type: .spectator)
     }
     
     func send(stateMessage: PlanningSessionStateMessage,
               state: PlanningSessionState,
-              sessionId: String) {
+              sessionId: String) async {
         switch state {
         case .none:
-            send(hostCommand: .noneState(message: stateMessage), sessionId: sessionId)
-            send(joinCommand: .noneState(message: stateMessage), sessionId: sessionId)
-            send(spectatorCommand: .noneState(message: stateMessage), sessionId: sessionId)
+            await send(hostCommand: .noneState(message: stateMessage), sessionId: sessionId)
+            await send(joinCommand: .noneState(message: stateMessage), sessionId: sessionId)
+            await send(spectatorCommand: .noneState(message: stateMessage), sessionId: sessionId)
         case .voting:
-            send(hostCommand: .votingState(message: stateMessage), sessionId: sessionId)
-            send(joinCommand: .votingState(message: stateMessage), sessionId: sessionId)
-            send(spectatorCommand: .votingState(message: stateMessage), sessionId: sessionId)
+            await send(hostCommand: .votingState(message: stateMessage), sessionId: sessionId)
+            await send(joinCommand: .votingState(message: stateMessage), sessionId: sessionId)
+            await send(spectatorCommand: .votingState(message: stateMessage), sessionId: sessionId)
         case .votingFinished:
-            send(hostCommand: .finishedState(message: stateMessage), sessionId: sessionId)
-            send(joinCommand: .finishedState(message: stateMessage), sessionId: sessionId)
-            send(spectatorCommand: .finishedState(message: stateMessage), sessionId: sessionId)
+            await send(hostCommand: .finishedState(message: stateMessage), sessionId: sessionId)
+            await send(joinCommand: .finishedState(message: stateMessage), sessionId: sessionId)
+            await send(spectatorCommand: .finishedState(message: stateMessage), sessionId: sessionId)
         case .coffeeBreakVoting:
-            send(hostCommand: .coffeeVoting(message: stateMessage), sessionId: sessionId)
-            send(joinCommand: .coffeeVoting(message: stateMessage), sessionId: sessionId)
-            send(spectatorCommand: .coffeeVoting(message: stateMessage), sessionId: sessionId)
+            await send(hostCommand: .coffeeVoting(message: stateMessage), sessionId: sessionId)
+            await send(joinCommand: .coffeeVoting(message: stateMessage), sessionId: sessionId)
+            await send(spectatorCommand: .coffeeVoting(message: stateMessage), sessionId: sessionId)
         case .coffeeBreakVotingFinished:
-            send(hostCommand: .coffeeVotingFinished(message: stateMessage), sessionId: sessionId)
-            send(joinCommand: .coffeeVotingFinished(message: stateMessage), sessionId: sessionId)
-            send(spectatorCommand: .coffeeVotingFinished(message: stateMessage), sessionId: sessionId)
+            await send(hostCommand: .coffeeVotingFinished(message: stateMessage), sessionId: sessionId)
+            await send(joinCommand: .coffeeVotingFinished(message: stateMessage), sessionId: sessionId)
+            await send(spectatorCommand: .coffeeVotingFinished(message: stateMessage), sessionId: sessionId)
         }
     }
     
-    func send(stateMessage: PlanningSessionStateMessage, state: PlanningSessionState, clientUuid: UUID) {
-        guard let client = clients.find(clientUuid) else { return }
+    func send(stateMessage: PlanningSessionStateMessage, state: PlanningSessionState, clientUuid: UUID) async {
+        guard let client = await clients.find(clientUuid) else { return }
         
         switch client.type {
         case .host:
             let command = makeHostServerSendCommand(state: state, message: stateMessage)
-            send(command: command, clientUuid: clientUuid)
+            await send(command: command, clientUuid: clientUuid)
         case .join:
             let command = makeJoinServerSendCommand(state: state, message: stateMessage)
-            send(command: command, clientUuid: clientUuid)
+            await send(command: command, clientUuid: clientUuid)
         case .spectator:
             let command = makeSpectatorServerSendCommand(state: state, message: stateMessage)
-            send(command: command, clientUuid: clientUuid)
+            await send(command: command, clientUuid: clientUuid)
         }
     }
     
@@ -212,26 +246,24 @@ extension PlanningSystem: PlanningSessionDelegate {
         }
     }
     
-    func sendInvalidCommand(error: PlanningInvalidCommandError, type: PlanningSystemType, clientUuid: UUID) {
-        guard let client = clients.find(clientUuid) else { return }
-        sendInvalidCommand(error: error, type: type, webSocket: client.socket)
+    func sendInvalidCommand(error: PlanningInvalidCommandError, type: PlanningSystemType, clientUuid: UUID) async {
+        guard let data = invalidCommandData(error: error, type: type) else { return }
+        await clients.send(data, to: clientUuid)
     }
     
-    func sendInvalidSessionCommand(error: PlanningInvalidSessionError, clientUuid: UUID) {
-        guard let client = clients.find(clientUuid) else { return }
-        sendInvalidSessionCommand(error: error, webSocket: client.socket)
+    func sendInvalidSessionCommand(error: PlanningInvalidSessionError, clientUuid: UUID) async {
+        guard let data = encode(PlanningCommands.JoinServerSend.invalidSession) else { return }
+        await clients.send(data, to: clientUuid)
     }
     
-    func sessionHasTimedOut(sessionId: String) {
-        Task {
-            guard let session = await sessions.find(id: sessionId) else { return }
-            send(hostCommand: .sessionIdleTimeout, sessionId: sessionId)
-            send(joinCommand: .sessionIdleTimeout, sessionId: sessionId)
-            send(spectatorCommand: .sessionIdleTimeout, sessionId: sessionId)
-            clients.close(sessionId: sessionId, type: .host)
-            clients.close(sessionId: sessionId, type: .join)
-            clients.close(sessionId: sessionId, type: .spectator)
-            await sessions.remove(session)
-        }
+    func sessionHasTimedOut(sessionId: String) async {
+        guard let session = await sessions.find(id: sessionId) else { return }
+        await send(hostCommand: .sessionIdleTimeout, sessionId: sessionId)
+        await send(joinCommand: .sessionIdleTimeout, sessionId: sessionId)
+        await send(spectatorCommand: .sessionIdleTimeout, sessionId: sessionId)
+        await clients.close(sessionId: sessionId, type: .host)
+        await clients.close(sessionId: sessionId, type: .join)
+        await clients.close(sessionId: sessionId, type: .spectator)
+        await sessions.remove(session)
     }
 }

@@ -7,14 +7,10 @@
 
 import Foundation
 import MambaNetworking
-import OpenCombine
 
 actor PlanningSession {
-    nonisolated let id: CurrentValueSubject<String, Never>
-    
-    private(set) var _id: String {
-        didSet { id.value = _id }
-    }
+    nonisolated let id: String
+    nonisolated let hostId: UUID
     private(set) var name: String
     private(set) var availableCards: [PlanningCard]
     private(set) var participants: [PlanningParticipant] {
@@ -48,9 +44,11 @@ actor PlanningSession {
     let password: String?
     
     private var stateMessage: PlanningSessionStateMessage {
-        PlanningSessionStateMessage(sessionCode: _id,
+        PlanningSessionStateMessage(sessionCode: id,
                                     sessionName: name,
-                                    password: password,
+                                    // Passwords are accepted only during join and must never be
+                                    // broadcast to every connected participant.
+                                    password: nil,
                                     availableCards: availableCards,
                                     participants: participants,
                                     ticket: ticket,
@@ -62,6 +60,7 @@ actor PlanningSession {
     }
     
     init(id: String,
+         hostId: UUID = UUID(),
          name: String,
          password: String?,
          availableCards: [PlanningCard],
@@ -73,8 +72,8 @@ actor PlanningSession {
          delegate: PlanningSessionDelegate? = nil,
          previousTickets: [PlanningTicket] = [],
          coffeeVotes: [PlanningCoffeeVote] = []) async {
-        self._id = id
-        self.id = CurrentValueSubject(_id)
+        self.id = id
+        self.hostId = hostId
         self.name = name
         self.password = password
         self.autoCompleteVoting = autoCompleteVoting
@@ -93,7 +92,7 @@ actor PlanningSession {
     // MARK: - Session idle timer
     
     private func configureIdleTimer() {
-        idleTimer.schedule(deadline: .now(), repeating: .seconds(60))
+        idleTimer.schedule(deadline: .now() + .seconds(60), repeating: .seconds(60))
         idleTimer.setEventHandler() { [weak self] in
             guard let self = self else { return }
             Task {
@@ -101,7 +100,7 @@ actor PlanningSession {
                 
                 if await self.idleTimerMinutesLeft <= 0 {
                     await self.idleTimer.cancel()
-                    await self.delegate?.sessionHasTimedOut(sessionId: self._id)
+                await self.delegate?.sessionHasTimedOut(sessionId: self.id)
                 }
             }
         }
@@ -119,12 +118,12 @@ actor PlanningSession {
     
     // MARK: - Send state to
     
-    func sendState(to uuid: UUID) {
-        delegate?.send(stateMessage: stateMessage, state: state, clientUuid: uuid)
+    func sendState(to uuid: UUID) async {
+        await delegate?.send(stateMessage: stateMessage, state: state, clientUuid: uuid)
     }
     
-    func sendStateToAll() {
-        delegate?.send(stateMessage: stateMessage, state: state, sessionId: _id)
+    func sendStateToAll() async {
+        await delegate?.send(stateMessage: stateMessage, state: state, sessionId: id)
     }
     
     // MARK: - Add, update or remove clients
@@ -146,6 +145,15 @@ actor PlanningSession {
         
         resetIdleTimer()
     }
+
+    func updateParticipantConnection(participantId: UUID, connected: Bool) async {
+        guard let participant = participants.first(where: { $0.participantId == participantId }),
+              participant.connected != connected
+        else { return }
+        participant.connected = connected
+        resetIdleTimer()
+        await sendStateToAll()
+    }
     
     func remove(participantId: UUID) {
         ticket?.removeVotes(participantId: participantId)
@@ -158,7 +166,11 @@ actor PlanningSession {
     
     // MARK: - Add or update ticket
     
-    func add(ticket: PlanningTicket) {
+    func add(ticket: PlanningTicket, uuid: UUID) async {
+        guard state == .none || state == .votingFinished else {
+            await delegate?.sendInvalidCommand(error: .invalidState, type: .host, clientUuid: uuid)
+            return
+        }
         if state == .votingFinished,
            let previousTicket = self.ticket,
            !previousTicket.ticketVotes.isEmpty {
@@ -168,7 +180,11 @@ actor PlanningSession {
         state = .voting
     }
     
-    func updateTicket(title: String, description: String, selectedTags: Set<String>) {
+    func updateTicket(title: String, description: String, selectedTags: Set<String>, uuid: UUID) async {
+        guard (state == .voting || state == .votingFinished), ticket != nil else {
+            await delegate?.sendInvalidCommand(error: .invalidState, type: .host, clientUuid: uuid)
+            return
+        }
         ticket?.title = title
         ticket?.description = description
         ticket?.selectedTags = selectedTags
@@ -183,14 +199,14 @@ actor PlanningSession {
              tag: String?,
              uuid: UUID,
              commandType: PlanningSystemType = .join,
-             commandUuid: UUID? = nil) {
+             commandUuid: UUID? = nil) async {
         guard state == .voting,
               let ticket = ticket,
               participants.contains(where: { $0.participantId == uuid })
         else {
-            delegate?.sendInvalidCommand(error: .invalidState,
-                                         type: commandType,
-                                         clientUuid: commandUuid ?? uuid)
+            await delegate?.sendInvalidCommand(error: .invalidState,
+                                               type: commandType,
+                                               clientUuid: commandUuid ?? uuid)
             return
         }
         ticket.removeVotes(participantId: uuid)
@@ -208,14 +224,14 @@ actor PlanningSession {
                 tag: String?,
                 uuid: UUID,
                 commandType: PlanningSystemType = .join,
-                commandUuid: UUID? = nil) {
+                commandUuid: UUID? = nil) async {
         guard state == .votingFinished,
               let ticket = ticket,
               participants.contains(where: { $0.participantId == uuid })
         else {
-            delegate?.sendInvalidCommand(error: .invalidState,
-                                         type: commandType,
-                                         clientUuid: commandUuid ?? uuid)
+            await delegate?.sendInvalidCommand(error: .invalidState,
+                                               type: commandType,
+                                               clientUuid: commandUuid ?? uuid)
             return
         }
         ticket.removeVotes(participantId: uuid)
@@ -225,15 +241,23 @@ actor PlanningSession {
         resetIdleTimer()
     }
     
-    func resetVotes() {
+    func resetVotes(uuid: UUID) async {
+        guard state == .votingFinished, ticket != nil else {
+            await delegate?.sendInvalidCommand(error: .invalidState, type: .host, clientUuid: uuid)
+            return
+        }
         ticket?.removeVotesAll()
         state = .voting
     }
-    
-    func finishVotes() {
-        participants.forEach { participant in
+
+    func finishVotes(uuid: UUID) async {
+        guard state == .voting, ticket != nil else {
+            await delegate?.sendInvalidCommand(error: .invalidState, type: .host, clientUuid: uuid)
+            return
+        }
+        for participant in participants {
             if ticket?.ticketVotes.contains(where: { $0.participantId == participant.participantId }) == false {
-                add(vote: nil, tag: nil, uuid: participant.participantId)
+                await add(vote: nil, tag: nil, uuid: participant.participantId)
             }
         }
         state = .votingFinished
@@ -242,17 +266,29 @@ actor PlanningSession {
     // MARK: - Coffee break voting
     
     
-    func startCoffeeVoting() {
+    func startCoffeeVoting(uuid: UUID) async {
+        guard state != .coffeeBreakVoting, state != .coffeeBreakVotingFinished else {
+            await delegate?.sendInvalidCommand(error: .invalidState, type: .host, clientUuid: uuid)
+            return
+        }
         previousState = state
         state = .coffeeBreakVoting
         coffeeRequestCount.removeAll()
     }
     
-    func finishCoffeeVoting() {
+    func finishCoffeeVoting(uuid: UUID) async {
+        guard state == .coffeeBreakVoting else {
+            await delegate?.sendInvalidCommand(error: .invalidState, type: .host, clientUuid: uuid)
+            return
+        }
         state = .coffeeBreakVotingFinished
     }
     
-    func endCoffeeVoting() {
+    func endCoffeeVoting(uuid: UUID) async {
+        guard state == .coffeeBreakVoting || state == .coffeeBreakVotingFinished else {
+            await delegate?.sendInvalidCommand(error: .invalidState, type: .host, clientUuid: uuid)
+            return
+        }
         state = previousState ?? .none
         previousState = nil
         coffeeRequestCount.removeAll()
@@ -262,11 +298,13 @@ actor PlanningSession {
     func add(coffeBreakVote vote: Bool,
              uuid: UUID,
              commandType: PlanningSystemType = .join,
-             commandUuid: UUID? = nil) {
-        guard state == .coffeeBreakVoting else {
-            delegate?.sendInvalidCommand(error: .invalidParameters,
-                                         type: commandType,
-                                         clientUuid: commandUuid ?? uuid)
+             commandUuid: UUID? = nil) async {
+        guard state == .coffeeBreakVoting,
+              uuid == hostId || participants.contains(where: { $0.participantId == uuid })
+        else {
+            await delegate?.sendInvalidCommand(error: .invalidUuid,
+                                               type: commandType,
+                                               clientUuid: commandUuid ?? uuid)
             return
         }
         coffeeVotes.removeAll { $0.participantId == uuid }
@@ -279,7 +317,15 @@ actor PlanningSession {
         resetIdleTimer()
     }
     
-    func toggleCoffeeRequestVote(participantId: UUID) {
+    func toggleCoffeeRequestVote(participantId: UUID,
+                                 commandType: PlanningSystemType,
+                                 commandUuid: UUID) async {
+        guard participantId == hostId || participants.contains(where: { $0.participantId == participantId }) else {
+            await delegate?.sendInvalidCommand(error: .invalidUuid,
+                                               type: commandType,
+                                               clientUuid: commandUuid)
+            return
+        }
         if coffeeRequestCount.contains(participantId) {
             coffeeRequestCount.remove(participantId)
         } else {
@@ -289,18 +335,23 @@ actor PlanningSession {
     
     // MARK: - Timer
 
-    func startTimer(with timeInterval: TimeInterval, uuid: UUID) {
-        guard state == .voting,
+    func startTimer(with timeInterval: TimeInterval, uuid: UUID) async {
+        guard timeInterval.isFinite,
+              timeInterval >= 0,
+              timeInterval <= 1800,
+              timeInterval.rounded() == timeInterval,
+              state == .voting,
               ticket != nil,
               timer == nil,
               timerTimeLeft == nil
         else {
-            delegate?.sendInvalidCommand(error: .invalidState, type: .host, clientUuid: uuid)
+            await delegate?.sendInvalidCommand(error: .invalidState, type: .host, clientUuid: uuid)
             return
         }
         timerTimeLeft = Int(timeInterval)
         timer = DispatchSource.makeTimerSource()
-        timer?.schedule(deadline: .now(), repeating: .seconds(1))
+        let firstTick = timeInterval == 0 ? DispatchTime.now() : DispatchTime.now() + .seconds(1)
+        timer?.schedule(deadline: firstTick, repeating: .seconds(1))
         
         timer?.setEventHandler() { [weak self] in
             guard let self = self else { return }
@@ -308,7 +359,7 @@ actor PlanningSession {
                 await self.handleTimerTick()
             }
         }
-        sendStateToAll()
+        await sendStateToAll()
         timer?.activate()
     }
     
@@ -321,38 +372,38 @@ actor PlanningSession {
         timerTimeLeft = nil
     }
 
-    private func handleTimerTick() {
+    private func handleTimerTick() async {
         guard let timerTimeLeft else { return }
         self.timerTimeLeft = max(0, timerTimeLeft - 1)
 
         if self.timerTimeLeft == 0 {
             timer?.cancel()
             clearTimer()
-            finishVotes()
-            sendStateToAll()
+            await finishVotes(uuid: hostId)
+            await sendStateToAll()
             resetIdleTimer()
         }
     }
     
-    func cancelTimer(uuid: UUID) {
+    func cancelTimer(uuid: UUID) async {
         guard state == .voting,
               let timer = timer,
               timerTimeLeft != nil
         else {
-            delegate?.sendInvalidCommand(error: .noTimer, type: .host, clientUuid: uuid)
+            await delegate?.sendInvalidCommand(error: .noTimer, type: .host, clientUuid: uuid)
             return
         }
         
         timer.cancel()
         self.timer = nil
         timerTimeLeft = nil
-        sendStateToAll()
+        await sendStateToAll()
         resetIdleTimer()
     }
     
     // MARK: - Send previous tickets
     
-    func sendPreviousTickets(uuid: UUID) {
+    func sendPreviousTickets(uuid: UUID) async {
         if state == .votingFinished,
            let currentTicket = self.ticket,
            !currentTicket.ticketVotes.isEmpty,
@@ -361,7 +412,7 @@ actor PlanningSession {
         }
         
         let message = PlanningPreviousTicketsMessage(previousTickets: previousTickets)
-        delegate?.send(hostCommand: .previousTickets(message: message), clientUuid: uuid)
+        await delegate?.send(hostCommand: .previousTickets(message: message), clientUuid: uuid)
         resetIdleTimer()
     }
 }

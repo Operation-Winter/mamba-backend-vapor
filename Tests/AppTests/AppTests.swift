@@ -10,40 +10,45 @@ private final class RecordingSessionDelegate: PlanningSessionDelegate {
     var invalidCommandTypes: [PlanningSystemType] = []
     var invalidCommandClientUUIDs: [UUID] = []
     var timeoutSessionIDs: [String] = []
+    var lastStateMessage: PlanningSessionStateMessage?
 
-    func send<T: Encodable>(command: T, clientUuid: UUID) {}
-
-    func send(hostCommand command: PlanningCommands.HostServerSend,
-              clientUuid: UUID) {}
-
-    func send(joinCommand command: PlanningCommands.JoinServerSend,
-              clientUuid: UUID) {}
+    func send<T: Encodable>(command: T, clientUuid: UUID) async {}
 
     func send(hostCommand command: PlanningCommands.HostServerSend,
-              sessionId: String) {}
+              clientUuid: UUID) async {}
 
     func send(joinCommand command: PlanningCommands.JoinServerSend,
-              sessionId: String) {}
+              clientUuid: UUID) async {}
+
+    func send(hostCommand command: PlanningCommands.HostServerSend,
+              sessionId: String) async {}
+
+    func send(joinCommand command: PlanningCommands.JoinServerSend,
+              sessionId: String) async {}
 
     func send(stateMessage: PlanningSessionStateMessage,
               state: PlanningSessionState,
-              sessionId: String) {}
+              sessionId: String) async {
+        lastStateMessage = stateMessage
+    }
 
     func send(stateMessage: PlanningSessionStateMessage,
               state: PlanningSessionState,
-              clientUuid: UUID) {}
+              clientUuid: UUID) async {
+        lastStateMessage = stateMessage
+    }
 
     func sendInvalidCommand(error: PlanningInvalidCommandError,
                             type: PlanningSystemType,
-                            clientUuid: UUID) {
+                            clientUuid: UUID) async {
         invalidCommandTypes.append(type)
         invalidCommandClientUUIDs.append(clientUuid)
     }
 
     func sendInvalidSessionCommand(error: PlanningInvalidSessionError,
-                                   clientUuid: UUID) {}
+                                   clientUuid: UUID) async {}
 
-    func sessionHasTimedOut(sessionId: String) {
+    func sessionHasTimedOut(sessionId: String) async {
         timeoutSessionIDs.append(sessionId)
     }
 }
@@ -62,6 +67,48 @@ final class AppTests: XCTestCase {
         await sessions.remove(session)
         let countAfterRemove = await sessions.count
         XCTAssertEqual(countAfterRemove, 0)
+    }
+
+    func testSessionIDsAreReservedWithoutCollisions() async {
+        let sessions = PlanningSessions()
+
+        let first = await sessions.reserveNextID()
+        let second = await sessions.reserveNextID()
+
+        XCTAssertEqual(first, "000000")
+        XCTAssertEqual(second, "000001")
+    }
+
+    func testClientIDsAreReservedWithoutCollisions() async throws {
+        let app = try await Application.make(.testing)
+        let clients = PlanningWebSocketClients(eventLoop: app.eventLoopGroup.next())
+        let uuid = UUID()
+
+        let firstReservation = await clients.reserve(uuid)
+        let secondReservation = await clients.reserve(uuid)
+        await clients.release(uuid)
+        let thirdReservation = await clients.reserve(uuid)
+
+        XCTAssertTrue(firstReservation)
+        XCTAssertFalse(secondReservation)
+        XCTAssertTrue(thirdReservation)
+        try await app.asyncShutdown()
+    }
+
+    func testSessionStateNeverBroadcastsThePassword() async {
+        let delegate = RecordingSessionDelegate()
+        let session = await PlanningSession(
+            id: "000007",
+            name: "Protected session",
+            password: "do-not-broadcast",
+            availableCards: [.one],
+            autoCompleteVoting: false,
+            delegate: delegate
+        )
+
+        await session.sendStateToAll()
+
+        XCTAssertNil(delegate.lastStateMessage?.password)
     }
 
     func testVotingAutomaticallyFinishesAfterEveryParticipantVotes() async {
@@ -167,6 +214,40 @@ final class AppTests: XCTestCase {
         XCTAssertEqual(delegate.invalidCommandTypes.count, 2)
     }
 
+    func testTimerRejectsValuesOutsideTheServerLimit() async {
+        let hostID = UUID()
+        let ticket = PlanningTicket(title: "Ticket", description: "Description", selectedTags: [])
+        let delegate = RecordingSessionDelegate()
+        let session = await makeSession(
+            id: "000008",
+            ticket: ticket,
+            state: .voting,
+            delegate: delegate
+        )
+
+        await session.startTimer(with: 1801, uuid: hostID)
+
+        XCTAssertEqual(delegate.invalidCommandTypes.count, 1)
+    }
+
+    func testCoffeeVoteRejectsUnknownClient() async {
+        let delegate = RecordingSessionDelegate()
+        let session = await makeSession(
+            id: "000009",
+            state: .coffeeBreakVoting,
+            delegate: delegate
+        )
+
+        await session.add(
+            coffeBreakVote: true,
+            uuid: UUID(),
+            commandType: .join,
+            commandUuid: UUID()
+        )
+
+        XCTAssertEqual(delegate.invalidCommandTypes.count, 1)
+    }
+
     func testTimerCompletionClearsTimerAndFinishesVoting() async throws {
         let hostID = UUID()
         let ticket = PlanningTicket(
@@ -202,7 +283,7 @@ final class AppTests: XCTestCase {
         let session = await makeSession(id: "000006")
         await planningSystem.sessions.add(session)
 
-        planningSystem.sessionHasTimedOut(sessionId: "000006")
+        await planningSystem.sessionHasTimedOut(sessionId: "000006")
         try await Task.sleep(nanoseconds: 200_000_000)
 
         let exists = await planningSystem.sessions.exists(id: "000006")
