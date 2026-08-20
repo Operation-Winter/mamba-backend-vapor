@@ -115,7 +115,11 @@ extension PlanningSystem {
             }
             client.socket = webSocket
             
-            await session.add(vote: nil, tag: nil, uuid: message.participantId)
+            await session.add(vote: nil,
+                              tag: nil,
+                              uuid: message.participantId,
+                              commandType: .host,
+                              commandUuid: uuid)
             await session.sendStateToAll()
         }
     }
@@ -331,11 +335,14 @@ extension PlanningSystem {
             guard let client = clients.find(uuid),
                   let session = await sessions.find(id: client.sessionId)
             else {
-                sendInvalidCommand(error: .invalidUuid, type: .join, webSocket: webSocket)
+                sendInvalidCommand(error: .invalidUuid, type: .host, webSocket: webSocket)
                 return
             }
             client.socket = webSocket
-            await session.add(coffeBreakVote: message.vote, uuid: uuid)
+            await session.add(coffeBreakVote: message.vote,
+                              uuid: uuid,
+                              commandType: .host,
+                              commandUuid: uuid)
             await session.sendStateToAll()
         }
     }

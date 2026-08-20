@@ -25,8 +25,10 @@ class PlanningSystem {
     }
     
     func connect(_ webSocket: WebSocket, type: PlanningSystemType) {
-        webSocket.onBinary { [unowned self] webSocket, buffer in
-            parseBufferMessage(webSocket: webSocket, buffer: buffer, type: type)
+        webSocket.eventLoop.execute { [unowned self] in
+            webSocket.onBinary { [unowned self] webSocket, buffer in
+                parseBufferMessage(webSocket: webSocket, buffer: buffer, type: type)
+            }
         }
     }
     
@@ -225,8 +227,10 @@ extension PlanningSystem: PlanningSessionDelegate {
             guard let session = await sessions.find(id: sessionId) else { return }
             send(hostCommand: .sessionIdleTimeout, sessionId: sessionId)
             send(joinCommand: .sessionIdleTimeout, sessionId: sessionId)
+            send(spectatorCommand: .sessionIdleTimeout, sessionId: sessionId)
             clients.close(sessionId: sessionId, type: .host)
             clients.close(sessionId: sessionId, type: .join)
+            clients.close(sessionId: sessionId, type: .spectator)
             await sessions.remove(session)
         }
     }

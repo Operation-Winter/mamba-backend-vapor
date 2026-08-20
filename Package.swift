@@ -29,6 +29,7 @@ let package = Package(
         ]),
         .testTarget(name: "AppTests", dependencies: [
             .target(name: "App"),
+            .product(name: "MambaNetworking", package: "mamba-networking"),
             .product(name: "XCTVapor", package: "vapor"),
         ])
     ],

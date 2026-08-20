@@ -179,12 +179,18 @@ actor PlanningSession {
     
     // MARK: - Vote on ticket
     
-    func add(vote card: PlanningCard?, tag: String?, uuid: UUID) {
+    func add(vote card: PlanningCard?,
+             tag: String?,
+             uuid: UUID,
+             commandType: PlanningSystemType = .join,
+             commandUuid: UUID? = nil) {
         guard state == .voting,
               let ticket = ticket,
               participants.contains(where: { $0.participantId == uuid })
         else {
-            delegate?.sendInvalidCommand(error: .invalidState, type: .join, clientUuid: uuid)
+            delegate?.sendInvalidCommand(error: .invalidState,
+                                         type: commandType,
+                                         clientUuid: commandUuid ?? uuid)
             return
         }
         ticket.removeVotes(participantId: uuid)
@@ -198,12 +204,18 @@ actor PlanningSession {
         resetIdleTimer()
     }
     
-    func update(vote card: PlanningCard?, tag: String?, uuid: UUID) {
+    func update(vote card: PlanningCard?,
+                tag: String?,
+                uuid: UUID,
+                commandType: PlanningSystemType = .join,
+                commandUuid: UUID? = nil) {
         guard state == .votingFinished,
               let ticket = ticket,
               participants.contains(where: { $0.participantId == uuid })
         else {
-            delegate?.sendInvalidCommand(error: .invalidState, type: .join, clientUuid: uuid)
+            delegate?.sendInvalidCommand(error: .invalidState,
+                                         type: commandType,
+                                         clientUuid: commandUuid ?? uuid)
             return
         }
         ticket.removeVotes(participantId: uuid)
@@ -247,9 +259,14 @@ actor PlanningSession {
         coffeeVotes.removeAll()
     }
     
-    func add(coffeBreakVote vote: Bool, uuid: UUID) {
+    func add(coffeBreakVote vote: Bool,
+             uuid: UUID,
+             commandType: PlanningSystemType = .join,
+             commandUuid: UUID? = nil) {
         guard state == .coffeeBreakVoting else {
-            delegate?.sendInvalidCommand(error: .invalidParameters, type: .join, clientUuid: uuid)
+            delegate?.sendInvalidCommand(error: .invalidParameters,
+                                         type: commandType,
+                                         clientUuid: commandUuid ?? uuid)
             return
         }
         coffeeVotes.removeAll { $0.participantId == uuid }
@@ -274,7 +291,9 @@ actor PlanningSession {
 
     func startTimer(with timeInterval: TimeInterval, uuid: UUID) {
         guard state == .voting,
-              ticket != nil
+              ticket != nil,
+              timer == nil,
+              timerTimeLeft == nil
         else {
             delegate?.sendInvalidCommand(error: .invalidState, type: .host, clientUuid: uuid)
             return
@@ -286,15 +305,7 @@ actor PlanningSession {
         timer?.setEventHandler() { [weak self] in
             guard let self = self else { return }
             Task {
-                await self.configureTimerTimeLeft((self.timerTimeLeft ?? 1) - 1)
-                
-                if await self.timerTimeLeft ?? 0 <= 0 {
-                    await self.timer?.cancel()
-                    await self.configureTimerTimeLeft(nil)
-                    await self.finishVotes()
-                    await self.sendStateToAll()
-                    await self.resetIdleTimer()
-                }
+                await self.handleTimerTick()
             }
         }
         sendStateToAll()
@@ -304,16 +315,36 @@ actor PlanningSession {
     func configureTimerTimeLeft(_ timeLeft: Int?) {
         timerTimeLeft = timeLeft
     }
+
+    private func clearTimer() {
+        timer = nil
+        timerTimeLeft = nil
+    }
+
+    private func handleTimerTick() {
+        guard let timerTimeLeft else { return }
+        self.timerTimeLeft = max(0, timerTimeLeft - 1)
+
+        if self.timerTimeLeft == 0 {
+            timer?.cancel()
+            clearTimer()
+            finishVotes()
+            sendStateToAll()
+            resetIdleTimer()
+        }
+    }
     
     func cancelTimer(uuid: UUID) {
         guard state == .voting,
-              let timer = timer
+              let timer = timer,
+              timerTimeLeft != nil
         else {
             delegate?.sendInvalidCommand(error: .noTimer, type: .host, clientUuid: uuid)
             return
         }
         
         timer.cancel()
+        self.timer = nil
         timerTimeLeft = nil
         sendStateToAll()
         resetIdleTimer()

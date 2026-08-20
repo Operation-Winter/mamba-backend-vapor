@@ -35,9 +35,13 @@ class PlanningWebSocketClient: WebSocketClient {
     
     private func setupSocket(_ socket: WebSocket) {
         resetTimeLeft()
-        socket.pingInterval = .seconds(pingInterval)
-        socket.onPong { [weak self] _ in
-            self?.resetTimeLeft()
+        let pingInterval = self.pingInterval
+        socket.eventLoop.execute { [weak self] in
+            guard let self else { return }
+            socket.pingInterval = .seconds(pingInterval)
+            socket.onPong { [weak self] _, _ in
+                self?.resetTimeLeft()
+            }
         }
     }
     
