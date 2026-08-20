@@ -90,7 +90,7 @@ swift package update
 To run the container:
 
 ```sh
-docker-compose up
+docker compose up --build
 ```
 
 ### Commands

@@ -1,0 +1,13 @@
+.build
+.git
+.github
+.swiftpm
+.vscode
+DerivedData
+Debug Websites
+Docs
+*.DS_Store
+.env*
+*.xcworkspace
+*.xcodeproj
+README.md
